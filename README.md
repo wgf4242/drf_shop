@@ -1,12 +1,13 @@
 pillow 处理图片的包。
 
 # 第3章 model设计和资源导入
+## 3-2 user models设计.mp4 
 
 1. 新建数据库 mxshop
 
         新建 apps, db_tools, extra_apps, media 
         右击 apps - mark as source root
-        右击 extra_apps  - mark as resource root
+        右击 extra_apps  - mark as source root
 
 2. settings.py 设置
         
@@ -37,6 +38,16 @@ models相关
 * 替换系统用户
 
     
-    # settings.py
+    # settings.py , UserProfile位置是在 users.models.UserProfile
     AUTH_USER_MODEL = 'users.UserProfile'
 
+## 3-3 goods的model设计.mp4
+通过一个model完成所有级别的类。定义从属关系，不定死关系。 指向自己这张表---`"self"`
+    
+    prarent_category = models.ForeignKey("self", null=True, blank=True, verbose_name="父类目级别", help_text="父目录",
+                                         related_name="sub_cat") #related_name作用后边查询用
+
+
+* 将 app 添加到 INSTALLED_APPS
+
+    'DjangoUeditoro', 'users', 'goods', 'trace', 'user_operation'添加到 settings

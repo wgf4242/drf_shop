@@ -59,3 +59,4 @@ models相关
     from django.contrib.auth import get_user_model
     User = get_user_model()
 
+## 3-5 用户操作的model设计

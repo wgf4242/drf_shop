@@ -12,8 +12,8 @@ class ShoppingCart(models.Model):
     """
     购物车
     """
-    user = models.ForeignKey(User, verbose_name=u"用户")
-    goods = models.ForeignKey(Goods, verbose_name=u"商品")
+    user = models.ForeignKey(User, verbose_name="用户")
+    goods = models.ForeignKey(Goods, verbose_name="商品")
     goods_num = models.IntegerField(default=0, verbose_name="购买数量")
 
     add_time = models.DateField(default=datetime.now, verbose_name="添加时间")
@@ -36,9 +36,9 @@ class OrderInfo(models.Model):
         ("cancel", "待支付"),
     )
 
-    user = models.ForeignKey(User, verbose_name=u"用户")
+    user = models.ForeignKey(User, verbose_name="用户")
     order_sn = models.CharField(max_length=30, unique=True, verbose_name="订单号")
-    trade_no = models.CharField(max_length=100, unique=True, null=True, blank=True, verbose_name=u"交易号")
+    trade_no = models.CharField(max_length=100, unique=True, null=True, blank=True, verbose_name="交易号")
     pay_status = models.CharField(choices=ORDER_STATUS, max_length=10, verbose_name="订单状态")
     post_script = models.CharField(max_length=11, verbose_name="订单留言")
     order_mount = models.FloatField(default=0.0, verbose_name="订单金额")
@@ -49,10 +49,10 @@ class OrderInfo(models.Model):
     sign_name = models.CharField(max_length=20, default="", verbose_name="签收人")
     signer_mobile = models.CharField(max_length=11, verbose_name="联系电话")
 
-    add_time = models.DateField(default=datetime.now, verbose_name=u"添加时间")
+    add_time = models.DateField(default=datetime.now, verbose_name="添加时间")
 
     class Meta:
-        verbose_name = u"订单"
+        verbose_name = "订单"
         verbose_name_plural = verbose_name
 
     def __str__(self):
@@ -67,7 +67,7 @@ class OrderGoods(models.Model):
     goods = models.ForeignKey(Goods, verbose_name="商品")
     goods_num = models.IntegerField(default=0, verbose_name="商品数量")
 
-    add_time = models.DateField(default=datetime.now, verbose_name=u"添加时间")
+    add_time = models.DateField(default=datetime.now, verbose_name="添加时间")
 
     class Meta:
         verbose_name = "订单商品"

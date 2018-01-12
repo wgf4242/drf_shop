@@ -1,7 +1,7 @@
 pillow 处理图片的包。
 
 # 第3章 model设计和资源导入
-## 3-2 user models设计.mp4 
+## 3-2 user model设计 
 
 1. 新建数据库 mxshop
 
@@ -41,7 +41,7 @@ models相关
     # settings.py , UserProfile位置是在 users.models.UserProfile
     AUTH_USER_MODEL = 'users.UserProfile'
 
-## 3-3 goods的model设计.mp4
+## 3-3 goods的model设计
 通过一个model完成所有级别的类。定义从属关系，不定死关系。 指向自己这张表---`"self"`
     
     prarent_category = models.ForeignKey("self", null=True, blank=True, verbose_name="父类目级别", help_text="父目录",
@@ -51,3 +51,11 @@ models相关
 * 将 app 添加到 INSTALLED_APPS
 
     'DjangoUeditoro', 'users', 'goods', 'trace', 'user_operation'添加到 settings
+    
+## 3-4 trade交易的model设计
+
+引入 user model 的方法
+
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+

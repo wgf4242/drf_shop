@@ -1,18 +1,19 @@
 from datetime import datetime
 
+from django.conf import settings
 from django.db import models
 from django.contrib.auth import get_user_model
 
 from goods.models import Goods
 
-User = get_user_model()
+# User = get_user_model()
 
 
 class ShoppingCart(models.Model):
     """
     购物车
     """
-    user = models.ForeignKey(User, verbose_name="用户", on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="用户", on_delete=models.CASCADE)
     goods = models.ForeignKey(Goods, verbose_name="商品", on_delete=models.CASCADE)
     goods_num = models.IntegerField(default=0, verbose_name="购买数量")
 
@@ -36,7 +37,7 @@ class OrderInfo(models.Model):
         ("cancel", "待支付"),
     )
 
-    user = models.ForeignKey(User, verbose_name="用户", on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="用户", on_delete=models.CASCADE)
     order_sn = models.CharField(max_length=30, unique=True, verbose_name="订单号")
     trade_no = models.CharField(max_length=100, unique=True, null=True, blank=True, verbose_name="交易号")
     pay_status = models.CharField(choices=ORDER_STATUS, max_length=10, verbose_name="订单状态")

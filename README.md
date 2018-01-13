@@ -76,10 +76,32 @@ models相关
     python manage.py migrate
     
 Django 如何知道我要运行哪个修改呢---记录在数据库的 django_migrationss 这张表。
- 
+ py
 要想重新生成goods，按如下步骤：
     
 1. 将 goods 表全部删除
 2. 将 django_migrationss 表中关于 goods 的记录删除掉
 3. 重新运行脚本
 
+## 3-7 xadmin后台管理系统的配置
+
+1. 将源的 xadmin 复制到 extra_apps 下
+2. 将源码各apps下的adminx.py 复制到本项目相应的各apps中。
+3. 配置 xadmin 到settings中
+    
+    'crispy_forms',
+    'xadmin',
+
+4. 安装 xadmin 的依赖包
+
+        官方 github xadmin ，找到 requirements 依赖包
+        https://github.com/sshwsfc/xadmin
+        https://github.com/sshwsfc/xadmin/blob/master/requirements.txt
+        pip install django-crispy-forms django-import-export django-reversion django-formtools future httplib2 six xlwt xlsxwriter
+
+5. create superuser admin/admin123
+6. 启动调试
+7. 把xadmin的各app模块修改为中文显示
+    
+        # apps.py
+        verbose_name = '商品'

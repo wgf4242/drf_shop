@@ -148,4 +148,21 @@ Django 如何知道我要运行哪个修改呢---记录在数据库的 django_mi
             lev3_instance.save()
 
 
+## 3-9 导入商品和商品类别数据-2
+
+媒体文件，图片的访问配置。将media目录添加到至默认图片访问路径
+
+1. settings 添加 MEDIA_ROOT
+
+        MEDIA_URL = "/media/"
+        MEDIA_ROOT = os.path.join(BASE_DIR, "media")
     
+2. url.py
+
+        from MxShop.settings import MEDIA_ROOT
+        from django.views.static import serve
+        
+        urlpatterns = [
+            url(r'^media/(?P<path>.*)$', serve, {"document_root": MEDIA_ROOT}),
+        ]
+                

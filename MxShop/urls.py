@@ -17,7 +17,10 @@ import xadmin
 # from django.contrib import admin
 # from django.urls import path
 from django.conf.urls import patterns, url
+from MxShop.settings import MEDIA_ROOT
+from django.views.static import serve
 
 urlpatterns = [
-    url('xadmin/', xadmin.site.urls),
+    url(r'^xadmin/', xadmin.site.urls),
+    url(r'^media/(?P<path>.*)$', serve, {"document_root": MEDIA_ROOT}),
 ]

@@ -60,3 +60,26 @@ models相关
     User = get_user_model()
 
 ## 3-5 用户操作的model设计
+
+## 3-6 migrations原理及表生成
+
+通过 appConfig进行配置。
+
+    'users.apps.UsersConfig',                 
+    'goods.apps.GoodsConfig',                 
+    'trade.apps.TradeConfig',                 
+    'user_operation.apps.UserOperationConfig',
+
+生成数据库表
+
+    python manage.py makemigrations
+    python manage.py migrate
+    
+Django 如何知道我要运行哪个修改呢---记录在数据库的 django_migrationss 这张表。
+ 
+要想重新生成goods，按如下步骤：
+    
+1. 将 goods 表全部删除
+2. 将 django_migrationss 表中关于 goods 的记录删除掉
+3. 重新运行脚本
+

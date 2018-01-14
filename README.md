@@ -166,3 +166,56 @@ Django 如何知道我要运行哪个修改呢---记录在数据库的 django_mi
             url(r'^media/(?P<path>.*)$', serve, {"document_root": MEDIA_ROOT}),
         ]
                 
+# 第4章  vue的结构和restful api介绍\
+
+## 4-1 restful api介绍.mp4
+
+前后端分离
+1. pc, app, pad 多端适应
+2. SPA开发模式开始流行
+3. 前后端开发职责不清
+4. 开发效率问题，前后端互相等待
+5. 前端一直配合着后端，能力受限
+6. 后台开发语言放模板高度耦合，导致开发语言依赖严重。
+
+前后端分离缺点
+1. 前后端学习门槛增加
+2. 数据依赖导致文档重要性增加
+3. 前端工作量加大
+4. SEO的难度加大
+5. 后端开发模式迁移增加成本
+
+restful api 目前是前后端分离最佳实践
+1. 轻量，直接通过http，不需要额外的，post/get/put/delete操作
+2. 面向资源，一目了然，具有自解释性
+3. 数据描述简单，一般通过json或者xml进行通信
+restful api 重要概念
+1. 概念 http://www.ruanyifeng.com/blog/2011/09/restful.html
+2. restful 实践 http://www.ruanyifeng.com/blog/2014/05/restful_api.html
+
+HTTP动词：常用的HTTP动词有下面五个（括号里是对应的SQL命令）。
+
+    GET（SELECT）：从服务器取出资源（一项或多项）。
+    POST（CREATE）：在服务器新建一个资源。
+    PUT（UPDATE）：在服务器更新资源（客户端提供改变后的完整资源）。
+    PATCH（UPDATE）：在服务器更新资源（客户端提供改变的属性）。
+    DELETE（DELETE）：从服务器删除资源。
+
+状态码（Status Codes）
+服务器向用户返回的状态码和提示信息，常见的有以下一些（方括号中是该状态码对应的HTTP动词）。
+
+    200 OK - [GET]：服务器成功返回用户请求的数据，该操作是幂等的（Idempotent）。
+    201 CREATED - [POST/PUT/PATCH]：用户新建或修改数据成功。
+    202 Accepted - [*]：表示一个请求已经进入后台排队（异步任务）
+    204 NO CONTENT - [DELETE]：用户删除数据成功。
+    400 INVALID REQUEST - [POST/PUT/PATCH]：用户发出的请求有错误，服务器没有进行新建或修改数据的操作，该操作是幂等的。
+    401 Unauthorized - [*]：表示用户没有权限（令牌、用户名、密码错误）。
+    403 Forbidden - [*] 表示用户得到授权（与401错误相对），但是访问是被禁止的。
+    404 NOT FOUND - [*]：用户发出的请求针对的是不存在的记录，服务器没有进行操作，该操作是幂等的。
+    406 Not Acceptable - [GET]：用户请求的格式不可得（比如用户请求JSON格式，但是只有XML格式）。
+    410 Gone -[GET]：用户请求的资源被永久删除，且不会再得到的。
+    422 Unprocesable entity - [POST/PUT/PATCH] 当创建一个对象时，发生一个验证错误。
+    500 INTERNAL SERVER ERROR - [*]：服务器发生错误，用户将无法判断发出的请求是否成功。
+    
+
+    

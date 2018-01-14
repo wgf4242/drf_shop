@@ -228,4 +228,20 @@ Chrome 下载 jsonview 插件
 
 用django手动引入时
 1. 需要指定 content_types HttpResponse(json.dumps(json_list), content_type="application/json") ， 大量时容易出错且麻烦
-2. 而且 add_time 不能进行系列化
+2. 而且 add_time 不能进行序列化
+
+## 5-2 django的serializer序列化model
+
+1. django.forms.models import model_to_dict 来转换为json对象，但仍然不能处理datefield
+2. 使用serializers.serialize进行序列化
+
+        from django.core import serializers
+        json_data = serializers.serialize("json", goods)
+        # return HttpResponse(json_data, content_type="application/json")
+        return JsonResponse(json_data, safe=False)
+        
+为什么还要用 REST Framwork？
+
+    1. drf已经做好了 添加 media 前缀的功能
+    2. 文档的生成
+    3. 输入的检测

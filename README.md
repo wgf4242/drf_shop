@@ -217,5 +217,15 @@ HTTP动词：常用的HTTP动词有下面五个（括号里是对应的SQL命令
     422 Unprocesable entity - [POST/PUT/PATCH] 当创建一个对象时，发生一个验证错误。
     500 INTERNAL SERVER ERROR - [*]：服务器发生错误，用户将无法判断发出的请求是否成功。
     
+# 第5章 商品列表页
 
+## 5-1 django的view实现商品列表页
     
+    # url.py
+    url(r'goods/')尽量用复数形式 
+
+Chrome 下载 jsonview 插件
+
+用django手动引入时
+1. 需要指定 content_types HttpResponse(json.dumps(json_list), content_type="application/json") ， 大量时容易出错且麻烦
+2. 而且 add_time 不能进行系列化

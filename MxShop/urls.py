@@ -16,16 +16,19 @@ Including another URLconf
 import xadmin
 # from django.contrib import admin
 # from django.urls import path
-from django.conf.urls import patterns, url
+from django.conf.urls import url, include
 from MxShop.settings import MEDIA_ROOT
 from django.views.static import serve
+from rest_framework.documentation import include_docs_urls
 
-from goods.view_base import GoodsListView
+from goods.views import GoodsListView
 
 urlpatterns = [
     url(r'^xadmin/', xadmin.site.urls),
+    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^media/(?P<path>.*)$', serve, {"document_root": MEDIA_ROOT}),
 
     # 商品列表页
     url(r'goods/$', GoodsListView.as_view(), name="goods-list"),
+    url(r'docs/', include_docs_urls(title="生鲜Title")),
 ]

@@ -99,7 +99,7 @@ Django 如何知道我要运行哪个修改呢---记录在数据库的 django_mi
         https://github.com/sshwsfc/xadmin/blob/master/requirements.txt
         pip install django-crispy-forms django-import-export django-reversion django-formtools future httplib2 six xlwt xlsxwriter
 
-5. create superuser admin/admin123
+5. createsuperuser admin/admin123
 6. 启动调试
 7. 把xadmin的各app模块修改为中文显示
     
@@ -245,3 +245,29 @@ Chrome 下载 jsonview 插件
     1. drf已经做好了 添加 media 前缀的功能
     2. 文档的生成
     3. 输入的检测
+
+## 5-3 apiview方式实现商品列表页-1
+
+1.pip install coreapi django-guardian 
+
+pip install coreapi 如果出现了utf8错误。
+
+    虚拟环境\Lib\site-packages\pip\compat\__init__.py 75行改为 s.decode('gbk')
+    pip uninstall coreapi markupsafe
+    pip install coreapi markupsafe
+
+2.引入文档
+    
+    
+    # urls.py
+    from rest_framework.documentation import include_docs_urls
+    url(r'docs/', include_docs_urls(title="生鲜Title")),
+
+3.settings引入 'rest_framework',
+
+    INSTALLED_APPS = [ 'rest_framework', ]
+
+4.写view和serializers.py， 运行访问 http://127.0.0.1:8000/goods/
+    
+    如果运行过程中__str__ returned non-string (type NoneType) ，是因为 createsuperuser时没有 name 属性，于是报错 
+    

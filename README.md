@@ -456,3 +456,45 @@ OrderingFilter
         serializer_class = GoodsSerializer
         filter_backends = (filters.OrderingFilter,)
         ordering_fields = ('sold_num', 'add_time')
+
+# 第6章  商品类别数据和vue展示
+## 6-1 商品类别数据接口-1
+
+类别两个接口
+    
+    1. 获取全部类别
+    2. 获取某一类别
+    
+完善接口：要注意写文档，在drf生成文档时会比较友好
+
+
+    class CategoryViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+        """
+        List:
+            商品分类列表数据
+        """
+        
+怎样通过一类拿到二类呢？怎样返过来拿
+
+    # models.py
+    parent_category = models.ForeignKey("self", null=True, blank=True, verbose_name="父类目级别", help_text="父目录",
+                                             on_delete=models.CASCADE, related_name="sub_cat")
+    
+用它的relate_name:sub_cat。serializers 里和 model里的名子是一致的。
+
+    class CategorySerializer3(serializers.ModelSerializer):
+        class Meta:...
+    class CategorySerializer2(serializers.ModelSerializer):
+        sub_cat = CategorySerializer3(many=True)
+        class Meta:...
+    class CategorySerializer(serializers.ModelSerializer):
+        sub_cat = CategorySerializer2(many=True)
+        class Meta:
+            model = GoodsCategory
+            fields = "__all__"
+
+获取某一个 mixins.RetrieveModelMixin,
+       
+    class CategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+
+通常的写法 /zoos/id ， 现在drf router已经帮我们做好了，我们直接访问 http://127.0.0.1:8000/category/<id>/ 就可以了

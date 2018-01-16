@@ -20,10 +20,13 @@ from rest_framework.documentation import include_docs_urls
 from rest_framework.routers import DefaultRouter
 
 from MxShop.settings import MEDIA_ROOT
-from goods.views import GoodsListViewSet
+from goods.views import GoodsListViewSet, CategoryViewSet
 
 router = DefaultRouter()
+# 配置goods的url
 router.register(r'goods', GoodsListViewSet, base_name='goods')
+# 配置category的url
+router.register(r'category', CategoryViewSet, base_name='category')
 
 # goods_list = GoodsListViewSet.as_view({ 'get': 'list', })
 

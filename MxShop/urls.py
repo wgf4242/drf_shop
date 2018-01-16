@@ -25,6 +25,7 @@ from goods.views import GoodsListViewSet
 router = DefaultRouter()
 router.register(r'goods', GoodsListViewSet)
 
+# goods_list = GoodsListViewSet.as_view({ 'get': 'list', })
 
 urlpatterns = [
     url(r'^xadmin/', xadmin.site.urls),

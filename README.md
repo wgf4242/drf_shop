@@ -340,3 +340,21 @@ initialize_request 中set了多个action，在动态设置 serializer 时有很�
     router = DefaultRouter()
     router.register(r'goods', GoodsListViewSet)
     urlpatterns = [ url(r'^', include(router.urls)),]
+    
+## 5-8 drf的Apiview、GenericView、Viewset和router的原理分析
+    
+    GenericViewSet				-drf
+        GenericAPIView			-drf
+            APIView				-drf
+                View			-django
+    
+    minxin
+        CreateModelMixin
+        ListModelMixin      --将get,list连接起来
+        UpdateModelMixin
+        RetrieveModelMixin
+        DestroyModelMixin
+    
+rest_framework\generics.py 中查看源码了解各种View
+
+ViewSet使用了ViewSetMixin，不通过 `def get, post `方法绑定，而通过 router 加 url 配置来绑定。而且 ViewSet 中绑定了多个 action。 

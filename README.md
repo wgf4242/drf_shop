@@ -322,3 +322,21 @@ pip install coreapi 如果出现了utf8错误。
 
 ## 5-7 viewsets和router完成商品列表页
 
+查看源码 viewsets.py, `GenericViewSet(ViewSetMixin, generics.GenericAPIView)`:在APIView上添加了ViewSetMixin，重写了 `as_view` 和 `initialize_request`。
+
+initialize_request 中set了多个action，在动态设置 serializer 时有很多的好处。
+
+* 使用 ViewSet
+
+
+    class GoodsListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet)
+    # urls.py
+    goods_list = GoodsListViewSet.as_view({ 'get': 'list', })
+    urlpatterns = [url(r'goods/$', goods_list, name="goods-list"),]
+
+* 使用 router 配置url
+
+
+    router = DefaultRouter()
+    router.register(r'goods', GoodsListViewSet)
+    urlpatterns = [ url(r'^', include(router.urls)),]

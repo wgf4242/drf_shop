@@ -269,5 +269,20 @@ pip install coreapi 如果出现了utf8错误。
 
 4.写view和serializers.py， 运行访问 http://127.0.0.1:8000/goods/
     
-    如果运行过程中__str__ returned non-string (type NoneType) ，是因为 createsuperuser时没有 name 属性，于是报错 
+    如果运行过程中__str__ returned non-string (type NoneType) ，是因为 createsuperuser时没有 name 属性，于是报错
+    或者在UesrProfile return self.username 
     
+## 5-5 drf的modelserializer实现商品列表页功能
+
+使用ModelSerializer，添加自定义字段category
+    
+    class CategorySerializer(serializers.ModelSerializer):
+        class Meta:
+            model = GoodsCategory
+            fields = "__all__"
+    class GoodsSerializer(serializers.ModelSerializer):
+        category = CategorySerializer()
+        class Meta:
+            model = Goods
+            fields = "__all__"
+

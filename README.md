@@ -286,3 +286,39 @@ pip install coreapi 如果出现了utf8错误。
             model = Goods
             fields = "__all__"
 
+## 5-6 GenericView方式实现商品列表页和分页功能详解.mp4
+
+1.ModelMixin, generic.GenericAPIView 实现, 这和ListAPIView源码是一样的
+
+    class GoodsListView(mixins.ListModelMixin, generics.GenericAPIView):
+        queryset = Goods.objects.all()[:10]
+        serializer_class = GoodsSerializer
+        def get(self, request, *args, **kwargs):
+            return self.list(request, *args, **kwargs)
+
+2.实现分页
+
+* 在 settings.py 中进行设置, 可以在 rest_framework\settings.py中的 DEFAULTS 中查看全部的配置
+
+        REST_FRAMEWORK = {
+            'PAGE_SIZE': 10
+        }
+        
+    访问 http://127.0.0.1:8000/goods/ 出现 next 字段，虽然next可以自己拼，但有一个好处，可以知道带了什么参数
+
+* 如何定置分页，使用自定义的pagination_class,并取消settings中的设置
+    
+        class StandardResultsSetPagination(PageNumberPagination):
+            page_size = 10
+            page_size_query_param = 'page_size'
+            page_query_param = "page"
+            max_page_size = 100
+        class GoodsListView(generics.ListAPIView):
+            queryset = Goods.objects.all()
+            serializer_class = GoodsSerializer
+            pagination_class = StandardResultsSetPagination
+
+    前台可以使用 page_size 来自定义每页大小
+
+## 5-7 viewsets和router完成商品列表页
+

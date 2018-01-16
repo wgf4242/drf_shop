@@ -358,3 +358,20 @@ initialize_request 中set了多个action，在动态设置 serializer 时有很�
 rest_framework\generics.py 中查看源码了解各种View
 
 ViewSet使用了ViewSetMixin，不通过 `def get, post `方法绑定，而通过 router 加 url 配置来绑定。而且 ViewSet 中绑定了多个 action。 
+
+## 5-9 drf的request和response
+
+Requests 的一些属性
+
+    .data
+    .query_params get请求的参数
+    .parsers 解析各种类型数据 android, ios
+    .user
+ 
+Responses 支持各种类型的返回
+ 
+    data: 返回数据
+    status: 状态码
+    template_name: A template name to use if HTMLRenderer is selected.
+    headers: A dictionary of HTTP headers to use in the response.
+    content_type: The content type of the response. Typically, this will be set automatically by the renderer as determined by content negotiation, but there may be some cases where you need to specify the content type explicitly.

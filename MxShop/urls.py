@@ -23,7 +23,7 @@ from MxShop.settings import MEDIA_ROOT
 from goods.views import GoodsListViewSet
 
 router = DefaultRouter()
-router.register(r'goods', GoodsListViewSet)
+router.register(r'goods', GoodsListViewSet, base_name='goods')
 
 # goods_list = GoodsListViewSet.as_view({ 'get': 'list', })
 

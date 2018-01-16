@@ -375,3 +375,52 @@ Responses 支持各种类型的返回
     template_name: A template name to use if HTMLRenderer is selected.
     headers: A dictionary of HTTP headers to use in the response.
     content_type: The content type of the response. Typically, this will be set automatically by the renderer as determined by content negotiation, but there may be some cases where you need to specify the content type explicitly.
+
+## 5-10 drf的过滤
+
+通过get_queryset,中间可以加逻辑，和`queryset = Goods.objects.all()` 效果一样
+
+    def get_queryset(self):
+        return Goods.objects.filter(shop_price__gt=100)
+
+手动添加逻辑来过滤结果
+
+    def get_queryset(self):
+        queryset = Goods.objects.all()
+        price_min = self.request.query_params.get("price_min", 0)
+        if price_min:
+            queryset = queryset.filter(shop_price__gt=int(price_min))
+        return queryset
+
+http://www.django-rest-framework.org/api-guide/filtering/#djangofilterbackend
+
+https://django-filter.readthedocs.io/en/master/guide/usage.html#the-model
+1. 安装 django-filter, settings中添加 
+
+        INSTALLED_APPS = ['django_filters']
+        REST_FRAMEWORK = { 'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',) } #默认就是，不添加也可以
+
+        # 一个简单的使用默认的 Filter
+        class GoodsListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+            filter_backends = (DjangoFilterBackend,)
+            filter_fields = ('name', 'shop_price')
+    
+2. 自定义Filter    
+
+新建 filters.py, filter_class = ProductFilter
+
+    class GoodsFilter(django_filters.rest_framework.FilterSet):
+        price_min = django_filters.NumberFilter(name='shop_price', lookup_expr='gt')
+        price_max = django_filters.NumberFilter(name='shop_price', lookup_expr='lt')
+        class Meta:
+            model = Goods
+            fields = ['price_min', 'price_max']
+            
+    # views.py
+    class GoodsListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+        queryset = Goods.objects.all()
+        serializer_class = GoodsSerializer
+        pagination_class = StandardResultsSetPagination
+        filter_backends = (DjangoFilterBackend,)
+        filter_class = GoodsFilter
+    

@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'trade.apps.TradeConfig',
     'user_operation.apps.UserOperationConfig',
     'crispy_forms',
+    'django_filters',
     'xadmin',
     'rest_framework',
 ]

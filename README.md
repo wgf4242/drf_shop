@@ -407,7 +407,7 @@ https://django-filter.readthedocs.io/en/master/guide/usage.html#the-model
     
 2. 自定义Filter    
 
-新建 filters.py, filter_class = ProductFilter
+新建 filters.py, 添加filter_class = GoodsFilter
 
     class GoodsFilter(django_filters.rest_framework.FilterSet):
         price_min = django_filters.NumberFilter(name='shop_price', lookup_expr='gt')
@@ -424,3 +424,35 @@ https://django-filter.readthedocs.io/en/master/guide/usage.html#the-model
         filter_backends = (DjangoFilterBackend,)
         filter_class = GoodsFilter
     
+## 5-11 drf的搜索和排序
+
+模糊搜索名字
+
+    name = django_filters.CharFilter(name='name', lookup_expr='icontains')
+    class Meta:
+        model = Goods
+        fields = ['price_min', 'price_max', 'name']
+
+配置drf的搜索
+
+http://www.django-rest-framework.org/api-guide/filtering/#searchfilter
+
+SearchFilter    
+    
+    from rest_framework import filters
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    search_fields = ('name', 'goods_brief', 'goods_desc')
+
+    # search_fields
+    '^' Starts-with search.
+    '=' Exact matches.
+    '@' Full-text search. (Currently only supported Django's MySQL backend.)
+    '$' Regex search.
+    
+OrderingFilter
+
+    class GoodsListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+        queryset = Goods.objects.all()
+        serializer_class = GoodsSerializer
+        filter_backends = (filters.OrderingFilter,)
+        ordering_fields = ('sold_num', 'add_time')

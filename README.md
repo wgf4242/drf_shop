@@ -498,3 +498,54 @@ OrderingFilter
     class CategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 
 通常的写法 /zoos/id ， 现在drf router已经帮我们做好了，我们直接访问 http://127.0.0.1:8000/category/<id>/ 就可以了
+
+## 6-3 vue展示商品分类数据
+
+跨域问题(CORS)--常见问题
+
+net:ERR_CONNECTION_REFUSED -- 通常是没有开启后台服务
+
+https://github.com/ottoyiu/django-cors-headers
+
+Django app for handling the server headers required for Cross-Origin Resource Sharing (CORS)
+
+Install from **pip**:
+
+    pip install django-cors-headers
+
+and then add it to your installed apps:
+    
+    INSTALLED_APPS = (
+        ...
+        'corsheaders',
+        ...
+    )
+    
+You will also need to add a middleware class to listen in on responses:
+
+    MIDDLEWARE = [  # Or MIDDLEWARE_CLASSES on Django < 1.10
+        ...
+        'corsheaders.middleware.CorsMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        ...
+    ]
+    
+Also if you are using `CORS_REPLACE_HTTPS_REFERER` it should be placed before Django's `CsrfViewMiddleware` (see more below). 
+
+### CORS_ORIGIN_ALLOW_ALL
+If `True`, the whitelist will not be used and all origins will be accepted. Defaults to `False`.
+
+### 导航显示 Tab分类
+
+model中的 `is_tab` 默认是 `False` 并不会显示, 在后台 是否导航勾选起来，在类别描述加上描述，保存。 在前台进行显示。
+
+## 6-4 前端展示商品列表页数据
+获取一级分类下的所有商品,用filter的method 来自定义过滤。
+    
+查找第一类别下的所有商品
+    
+    class GoodsFilter(django_filters.rest_framework.FilterSet):
+        top_category = django_filters.NumberFilter(method='top_category_filter')
+        def top_category_filter(self, queryset, name, value):
+            return queryset.filter(Q(category_id=value) | Q(category__parent_category_id=value) | Q(
+                category__parent_category__parent_category_id=value))

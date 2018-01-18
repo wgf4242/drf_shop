@@ -16,6 +16,7 @@ Including another URLconf
 import xadmin
 from django.conf.urls import url, include
 from django.views.static import serve
+from rest_framework.authtoken import views
 from rest_framework.documentation import include_docs_urls
 from rest_framework.routers import DefaultRouter
 
@@ -38,4 +39,7 @@ urlpatterns = [
     # 商品列表页
     url(r'^', include(router.urls)),
     url(r'docs/', include_docs_urls(title="生鲜Title")),
+
+    url(r'^api-token-auth/', views.obtain_auth_token)
+
 ]

@@ -363,7 +363,7 @@ ViewSet使用了ViewSetMixin，不通过 `def get, post `方法绑定，而通�
 
 Requests 的一些属性
 
-    .data
+    .data -- 只会将 POST 和 FILES 放进来
     .query_params get请求的参数
     .parsers 解析各种类型数据 android, ios
     .user
@@ -549,3 +549,92 @@ model中的 `is_tab` 默认是 `False` 并不会显示, 在后台 是否导航�
         def top_category_filter(self, queryset, name, value):
             return queryset.filter(Q(category_id=value) | Q(category__parent_category_id=value) | Q(
                 category__parent_category__parent_category_id=value))
+
+# 第7章 用户登录和手机注册
+## 7-1 drf的token登录和原理-1.mp4
+进入  rest_framework.urls 中的login，进入 LoginView 可以看到是有csrf验证的。访问 http://127.0.0.1:8000/api-auth/ F12，element中可以看到csrf。对表单进行安全验证的--防止跨站攻击。
+
+由于前端有可能是移动端，android等肯定不是一个站点的-肯定跨站。
+
+http://www.django-rest-framework.org/api-guide/authentication/
+
+### Setting the authentication scheme
+The default authentication schemes may be set globally, using the `DEFAULT_AUTHENTICATION_CLASSES` setting. For example.
+
+    REST_FRAMEWORK = {
+        'DEFAULT_AUTHENTICATION_CLASSES': (
+            'rest_framework.authentication.BasicAuthentication',
+            'rest_framework.authentication.SessionAuthentication',
+        )
+    }
+
+### TokenAuthentication Token 验证模式
+    
+    INSTALLED_APPS = (
+        ...
+        'rest_framework.authtoken'
+    )
+    
+makemigrations, migrate 后多出一张表 authtoken_token: key created user_id(外键)
+
+在user创建之初时就应该创建好这个token， 一个user对应一个token。
+
+我们新建一个用户看一下：
+    
+    python manage.py createsuperuser
+    admin2
+    hello123
+    
+并没有生成 token ， 代码方式生成的token
+
+    from rest_framework.authtoken.models import Token
+    
+    token = Token.objects.create(user=...)
+    print token.key
+
+配置 url
+
+    from rest_framework.authtoken import views
+    urlpatterns += [
+        url(r'^api-token-auth/', views.obtain_auth_token)
+    ]
+    
+使用firefox 插件 HttpRequester 来测试
+
+    url; http://127.0.0.1:8000/api-token-auth/
+    content: 
+    {
+    "username":"admin",
+    "password":"admin123"
+    }
+点击post,  生成了一个token
+
+    {"token":"d20a187a9301b84d8e32fde74965b9cb0e4a8c6f"}
+
+在官方文档说明 添加 `Authorization` 到 HTTP header, 以Token前缀开头
+
+    Authorization: Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b
+    
+我们在HttpRequester 点击 header，添加它 `Token d20a187a9301b84d8e32fde74965b9cb0e4a8c6f` 到 header, URL: `http://127.0.0.1:8000/goods/`  ，来测试是否能取到user，我们在 `ListModelMixin` 里打一个断点。
+
+并没有取到 user, settings的问题，于是我们将 `TokenAuthentication` 添加到 REST_FRAMEWORK 配置中 
+        
+        'rest_framework.authentication.TokenAuthentication',
+
+request.data -- 只会将 POST 和 FILES 放进来
+request.auth -- 可以取到token值 
+
+* `django.contrib.sessions.middleware.SessionMiddleware` 学习
+
+拦截器 可以写加入 Middleware ,重载 process_request , 判断不是 Chrome返回一个response， Middleware 是从上向下载入， 从下向上返回 Response . 
+
+`Middleware` 会对每一个 request 都会做一个处理的， `REST_FRAMEWORK` 中的auth是验证用户信息的。
+
+
+`rest_framework.authtoken.views.ObtainAuthToken` 验证方式--取到 `request` 对象中的 `user`，然后 `Token.objects.get_or_create(user=user)` 没有则进行创建。
+
+`TokenAuthentication` 中通过 get_authorization_header(request).split() 取到 token 的值
+ 
+token验证方式的问题
+1. 分布式的系统--需要将用户同步过去，比较麻烦。
+2. 它没有一个过期时间。

@@ -697,3 +697,48 @@ Base64是一种编码，也就是说，它是可以被翻译回原来的样子�
 实例：A用户关注了B用户，给B用户发了一个邮件，点击链接可让B用户关注A用户不需要进行登录。也便于做单点登录
 
 单点登录：单点登录（Single Sign On），简称为 SSO，是目前比较流行的企业业务整合的解决方案之一。SSO的定义是在多个应用系统中，用户只需要登录一次就可以访问所有相互信任的应用系统。比如 *.taobao.com.
+
+## 7-5 json web token方式完成用户认证
+
+https://github.com/GetBlimp/django-rest-framework-jwt
+
+### Installation
+
+    pip install djangorestframework-jwt
+    
+### Usage
+In your `settings.py`, add `JSONWebTokenAuthentication` to Django REST framework's `DEFAULT_AUTHENTICATION_CLASSES`.
+    
+    REST_FRAMEWORK = {
+        'DEFAULT_PERMISSION_CLASSES': (
+            'rest_framework.permissions.IsAuthenticated',
+        ),
+        'DEFAULT_AUTHENTICATION_CLASSES': (
+            'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+            'rest_framework.authentication.SessionAuthentication',
+            'rest_framework.authentication.BasicAuthentication',
+        ),
+    }
+
+In your `urls.py` add the following URL route to enable obtaining a token via a POST included the user's username and password.
+
+    from rest_framework_jwt.views import obtain_jwt_token
+    urlpatterns += [
+        url(r'^api-token-auth/', obtain_jwt_token),
+    ]
+
+在 HttpRequester 中测试
+    
+    URL: http://127.0.0.1:8000/jwt_auth/
+    POST
+    {
+    "username":"admin",
+    "password":"admin123"
+    }
+    $ http --json POST http://127.0.0.1:8000/jwt_auth/ username="admin" password="admin123"
+
+
+Now in order to access protected api urls you must include the ` Authorization: JWT <your_token>` header.在HttpRequester ,headers添加 `Authorization , JWT <token> `测试。
+
+    $ curl -H "Authorization: JWT <your_token>" http://localhost:8000/protected-url/
+

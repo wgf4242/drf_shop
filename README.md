@@ -638,3 +638,12 @@ request.auth -- 可以取到token值
 token验证方式的问题
 1. 分布式的系统--需要将用户同步过去，比较麻烦。
 2. 它没有一个过期时间。
+
+## 7-3 viewsets配置认证类
+
+token auth错误返回 401 错误--认证令牌无效。当用户登录时间过期时访问公众页，返回一个401错误。后端如何解决？
+
+REST_FRAMEWORK 中取消 TokenAuthentication， 将 token 拿到 GoodsListViewSet 来做。(实际是不能配在列表页的)
+
+    class GoodsListViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+        authentication_classes = (TokenAuthentication, )

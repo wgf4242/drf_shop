@@ -742,3 +742,30 @@ Now in order to access protected api urls you must include the ` Authorization: 
 
     $ curl -H "Authorization: JWT <your_token>" http://localhost:8000/protected-url/
 
+## 7-6 前端和jwt接口调试
+
+如果 jwt 使用的是django的验证系统，如果我们想使用手机号登录是需要自定义的
+
+https://docs.djangoproject.com/en/2.0/topics/auth/customizing/
+
+    # settings.py
+    AUTHENTICATION_BACKENDS = ['users.views.CustomBackend']
+    # user.views.py    
+    class CustomBackend(ModelBackend):
+        def authenticate(self, request, username=None, password=None):
+            try:
+                user = get_user_model().objects.get(Q(username=username) | Q(mobile=username))
+                if user.check_password(password):
+                    return user
+            except Exception as e:
+                return None
+
+http://getblimp.github.io/django-rest-framework-jwt/#additional-settings
+
+JWT是有一个过期时间的，
+
+    from datetime import datetime
+    JWT_AUTH = {
+        'JWT_EXPIRATION_DELTA': datetime.timedelta(days=7),
+        'JWT_AUTH_HEADER_PREFIX': 'JWT',
+    }

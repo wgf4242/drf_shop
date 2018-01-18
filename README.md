@@ -1,3 +1,5 @@
+[TOC]
+
 pillow 处理图片的包。
 
 # 第3章 model设计和资源导入
@@ -329,10 +331,10 @@ initialize_request 中set了多个action，在动态设置 serializer 时有很�
 * 使用 ViewSet
 
 
-    class GoodsListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet)
-    # urls.py
-    goods_list = GoodsListViewSet.as_view({ 'get': 'list', })
-    urlpatterns = [url(r'goods/$', goods_list, name="goods-list"),]
+        class GoodsListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet)
+        # urls.py
+        goods_list = GoodsListViewSet.as_view({ 'get': 'list', })
+        urlpatterns = [url(r'goods/$', goods_list, name="goods-list"),]
 
 * 使用 router 配置url
 
@@ -647,3 +649,51 @@ REST_FRAMEWORK 中取消 TokenAuthentication， 将 token 拿到 GoodsListViewSe
 
     class GoodsListViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         authentication_classes = (TokenAuthentication, )
+        
+## 7-4 json web token的原理
+
+前后端分离之JWT用户认证
+
+https://www.jianshu.com/p/180a870a308a
+ 
+Json Web Token（JWT）
+
+* Header 头部
+头部包含了两部分，token 类型和采用的加密算法
+    
+    {
+      "alg": "HS256",
+      "typ": "JWT"
+    }
+    
+它会使用 Base64 编码组成 JWT 结构的第一部分,如果你使用Node.js，可以用Node.js的包base64url来得到这个字符串。
+
+Base64是一种编码，也就是说，它是可以被翻译回原来的样子来的。它并不是一种加密过程。
+
+* Payload 负载
+
+这部分就是我们存放信息的地方了，你可以把用户 ID 等信息放在这里，JWT 规范里面对这部分有进行了比较详细的介绍，常用的由 iss（签发者），exp（过期时间），sub（面向的用户），aud（接收方），iat（签发时间）。
+
+    {
+        "iss": "lion1ou JWT",
+        "iat": 1441593502,
+        "exp": 1441594722,
+        "aud": "www.example.com",
+        "sub": "lion1ou@163.com"
+    }
+
+同样的，它会使用 Base64 编码组成 JWT 结构的第二部分
+
+* Signature 签名
+
+前面两部分都是使用 Base64 进行编码的，即前端可以解开知道里面的信息。Signature 需要使用编码后的 header 和 payload 以及我们提供的一个密钥，然后使用 header 中指定的签名算法（HS256）进行签名。签名的作用是保证 JWT 没有被篡改过。三个部分通过.连接在一起就是我们的 JWT 了，它可能长这个样子，长度貌似和你的加密算法和私钥有关系。
+
+    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU3ZmVmMTY0ZTU0YWY2NGZmYzUzZGJkNSIsInhzcmYiOiI0ZWE1YzUwOGE2NTY2ZTc2MjQwNTQzZjhmZWIwNmZkNDU3Nzc3YmUzOTU0OWM0MDE2NDM2YWZkYTY1ZDIzMzBlIiwiaWF0IjoxNDc2NDI3OTMzfQ.PA3QjeyZSUh7H0GfE0vJaKW4LjKJuC3dVLQiY4hii8s
+
+使用JWT后完全通过算法进行加密解密，不需要 token 和 session 表了。
+
+而JWT方式将用户状态分散到了客户端中，可以明显减轻服务端的内存压力。除了用户id之外，还可以存储其他的和用户相关的信息，例如该用户是否是管理员、用户所在的分组等。虽说JWT方式让服务器有一些计算压力（例如加密、编码和解码），但是这些压力相比磁盘存储而言可能就不算什么了。具体是否采用，需要在不同场景下用数据说话。
+
+实例：A用户关注了B用户，给B用户发了一个邮件，点击链接可让B用户关注A用户不需要进行登录。也便于做单点登录
+
+单点登录：单点登录（Single Sign On），简称为 SSO，是目前比较流行的企业业务整合的解决方案之一。SSO的定义是在多个应用系统中，用户只需要登录一次就可以访问所有相互信任的应用系统。比如 *.taobao.com.

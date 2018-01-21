@@ -769,3 +769,5 @@ JWT是有一个过期时间的，
         'JWT_EXPIRATION_DELTA': datetime.timedelta(days=7),
         'JWT_AUTH_HEADER_PREFIX': 'JWT',
     }
+
+## 7-7 云片网发送短信验证码

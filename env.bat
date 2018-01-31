@@ -1,0 +1,1 @@
+cmd /k f:\project\vueshop\Scripts\activate.bat && cd MxShop

@@ -774,3 +774,65 @@ JWT是有一个过期时间的，
 
 使用request包发送数据
 
+## 7-8 drf实现发送短信验证码接口-1
+
+对VerifyCode表操作
+
+SmsSerializer 为什么不用 model serializer? 
+
+    因为 VerifyCode 中 code是必填字段，在 表单时只需要提交手机号码，并没有code ，会验证失败，所以我们自己写逻辑。
+
+settings 添加
+
+    REGEX_MOBILE = "^1[358]\d{9}$|^147\d{8}$|^176\d\{8}$"
+    APIKEY = $efuih23u"
+
+serializers.py
+
+    class SmsSerializer(serializers.Serializer):
+        mobile = serializers.CharField(max_length=11)
+    
+        def validate_mobile(self, mobile):
+            # 验证手机号码
+            # 手机是否注册
+            if User.objects.filter(mobile=mobile).count():
+                raise serializers.ValidationError("用户已存在")
+    
+            # 验证手机号码是否合法
+            if re.match(REGEX_MOBILE, mobile):
+                raise serializers.ValidationError("手机号码非法")
+    
+            # 验证码发送频率
+            one_minutes_ago = datetime.now() - timedelta(hours=0, minutes=1, seconds=0)
+            if VerifyCode.objects.filter(add_time__gt=one_minutes_ago, mobile=mobile).count() > 0:
+                raise serializers.ValidationError("距离上一次发送未超过60s")
+    
+            return mobile
+    
+user.views.py 随机四位数字验证码，验证后保存到model，然后发送 201状态，失败发送400状态
+
+    class SmsCodeGViewSet(CreateModelMixin, viewsets.GenericViewSet):
+        serializer_class = SmsSerializer
+        def generate_code(self):  # 生成四位数字的验证码
+            seeds = "1234567890"
+            random_str = []
+            for i in range(4):
+                random_str.append(choice(seeds))
+            return "".join(random_str)
+        def create(self, request, *args, **kwargs):
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            mobile = serializer.validated_data["mobile"]
+            yun_pian = YunPian(APIKEY)
+            code = self.generate_code()
+            sms_status = yun_pian.send_sms(code=code, mobile=mobile)
+            if sms_status["code"] != 0:
+                return Response({
+                    "mobile": sms_status["msg"]
+                }, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                code_record = VerifyCode(code=code, mobile=mobile)
+                code_record.save()
+                return Response({
+                    "mobile": sms_status["msg"]
+                }, status=status.HTTP_201_CREATED)

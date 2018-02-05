@@ -836,3 +836,38 @@ user.views.py 随机四位数字验证码，验证后保存到model，然后发�
                 return Response({
                     "mobile": sms_status["msg"]
                 }, status=status.HTTP_201_CREATED)
+
+添加到路由
+    
+    router.register(r'codes', SmsCodeGViewSet, base_name='codes')
+
+## 7-10 user serializer和validator验证
+
+* 让mobile可以为空，前端传过来时自动添加到mobile里。这里为了演示让它可以为空。
+* 比较好的方法是 username, mobile都传过来。
+
+自定义序列化User UserSerializer
+
+    # serializers.py
+    class UserSerializer(serializers.ModelSerializer):
+        code = serializers.CharField(max_length=4, min_length=4)
+    
+        def validate_code(self, code):
+            # 前端传过来的值放在 initial_data里
+            veryfy_records = VerifyCode.objects.filter(mobile=self.initial_data["username"]).order_by("-add_time")
+            if veryfy_records:
+                last_record = veryfy_records[0]
+                five_minutes_ago = datetime.now() - timedelta(hours=0, minutes=5, seconds=0)
+                if five_minutes_ago < last_record.add_time:
+                    raise serializers.ValidationError("验证码过期")
+                if last_record != code:
+                    raise serializers.ValidationError("验证码错误")
+            else:
+                raise serializers.ValidationError("验证码错误")
+        class Meta:
+            model = User
+            fields = ("username", "code", "mobile")
+            # code 在userprofile里是没有的，是我们自己添加的
+
+作用所有的字段上
+    def validate(self, attrs):

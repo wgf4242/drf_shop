@@ -68,3 +68,10 @@ class SmsCodeGViewSet(CreateModelMixin, viewsets.GenericViewSet):
             return Response({
                 "mobile": sms_status["msg"]
             }, status=status.HTTP_201_CREATED)
+
+
+class UserViewSet(CreateModelMixin, viewsets.GenericViewSet):
+    """
+    用户
+    """
+    pass

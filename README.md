@@ -955,3 +955,30 @@ http://www.django-rest-framework.org/api-guide/authentication/#generating-tokens
 signal分离性比较好， def create 更灵活。
  
  自定义信号量 https://docs.djangoproject.com/en/1.11/topics/signals/#defining-and-sending-signals
+ 
+ 
+ ## 7-13 vue和注册功能联调
+ 
+两种模式，1. 注册完成后登录 2. 注册完返回首页
+
+UserViewSet 重载 create  和 perform_create (返回instance实例) , 跟踪jwt源码得到生成token的代码
+
+    from rest_framework_jwt.serializers import jwt_encode_handler, jwt_payload_handler
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = self.perform_create(serializer)
+
+        re_dict = serializer.data
+        payload = jwt_payload_handler(user)
+        re_dict["token"] = jwt_encode_handler(payload)
+        re_dict["name"] = user.name if user.name else user.username
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(re_dict, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        return serializer.save()
+ 
+前端退出：将cookie的token和name清空，跳转到登录页面。

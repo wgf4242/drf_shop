@@ -2,6 +2,13 @@
 
 pillow 处理图片的包。
 
+# FAQ
+
+1. Model class MyModel doesn't declare an explicit app_label and isn't in an application in INSTALLED_APPS
+
+        没有 mark as source root的原因。
+
+
 # 第3章 model设计和资源导入
 ## 3-2 user model设计 
 
@@ -10,6 +17,8 @@ pillow 处理图片的包。
         新建 apps, db_tools, extra_apps, media 
         右击 apps - mark as source root
         右击 extra_apps  - mark as source root
+        
+        
 
 2. settings.py 设置
         
@@ -841,7 +850,7 @@ user.views.py 随机四位数字验证码，验证后保存到model，然后发�
     
     router.register(r'codes', SmsCodeGViewSet, base_name='codes')
 
-## 7-10 user serializer和validator验证
+## 7-10,11 user serializer和validator验证
 
 * 让mobile可以为空，前端传过来时自动添加到mobile里。这里为了演示让它可以为空。
 * 比较好的方法是 username, mobile都传过来。
@@ -870,4 +879,26 @@ user.views.py 随机四位数字验证码，验证后保存到model，然后发�
             # code 在userprofile里是没有的，是我们自己添加的
 
 作用所有的字段上
+
     def validate(self, attrs):
+        attrs["mobile"] = attrs["username"]
+        del attrs["code"]
+        return attrs
+
+* drf validator
+http://www.django-rest-framework.org/api-guide/validators/
+
+post后的返回是json格式， 通过 http_code 来确定请求成功失败。
+
+    { 
+        "<your_field1>" : ["<errorMessage1>", "<errorMessage2>" ... ] ,
+        "<your_field2>" : ["<errorMessage1>", "<errorMessage2>" ... ] ,
+    }
+
+* views.py UserViewSet
+
+        serializer_class = UserRegSerializer
+    
+* url.py
+
+        router.register(r'users', UserViewSet, base_name='users')

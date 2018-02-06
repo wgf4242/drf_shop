@@ -12,6 +12,8 @@ from users.models import VerifyCode
 from users.serializsers import SmsSerializer
 from utils.yunpian import YunPian
 
+from users.serializsers import UserRegSerializer
+
 User = get_user_model()
 
 
@@ -74,4 +76,5 @@ class UserViewSet(CreateModelMixin, viewsets.GenericViewSet):
     """
     用户
     """
-    pass
+    serializer_class = UserRegSerializer
+

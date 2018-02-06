@@ -12,6 +12,7 @@
 @time: 2017/7/4 17:04
 """
 import xadmin
+from users.models import VerifyCode
 from xadmin import views
 # from .models import VerifyCode
 
@@ -31,6 +32,6 @@ class VerifyCodeAdmin(object):
     list_display = ['code', 'mobile', "add_time"]
 
 
-# xadmin.site.register(VerifyCode, VerifyCodeAdmin)
+xadmin.site.register(VerifyCode, VerifyCodeAdmin)
 xadmin.site.register(views.BaseAdminView, BaseSetting)
 xadmin.site.register(views.CommAdminView, GlobalSettings)

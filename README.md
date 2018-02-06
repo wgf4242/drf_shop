@@ -902,3 +902,56 @@ post后的返回是json格式， 通过 http_code 来确定请求成功失败。
 * url.py
 
         router.register(r'users', UserViewSet, base_name='users')
+
+## 7-12 django信号量实现用户密码修改
+
+* 在后台添加验证码, 再添加用户测试
+
+        报错：UserProfile' object has no attribute 'code'.
+
+createMixins 里
+
+http://www.django-rest-framework.org/api-guide/fields/#core-arguments
+ 
+serializers.data 时进行序列化，实际上已经删除了， 
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+code --添加 write_only=True
+ 
+添加 write_only 后，不会再序列化。就不会报错了。
+
+password 给返回了，不合理，将它设置为write_only ， 数据库中密码为明文，再处理下
+
+UserProfile(AbstractUser) , AbstractUser 中有set_password ，对密码进行处理。 重载create
+
+    def create(self, validated_data):
+        user = super(UserRegSerializer, self).create(validated_data=validated_data)
+        user.set_password(validated_data["password"])
+        user.save()
+        return user 
+
+另一种方式使用 signals -- pre_post, https://docs.djangoproject.com/en/1.11/topics/signals/ .
+
+drf 中也提到在 authentication 中。
+http://www.django-rest-framework.org/api-guide/authentication/#generating-tokens
+
+* 在signals.py中添加
+    
+        User = get_user_model()
+        @receiver(post_save, sender=User)
+        def create_auth_token(sender, instance=None, created=False, **kwargs):
+            if created:
+                password = instance.password
+                instance.set_password(password)
+                instance.save()
+
+
+最后在apps.py中添加signals ， 注释掉 def create 断点调试。
+
+    def ready(self):
+        import users.signals
+        
+signal分离性比较好， def create 更灵活。
+ 
+ 自定义信号量 https://docs.djangoproject.com/en/1.11/topics/signals/#defining-and-sending-signals

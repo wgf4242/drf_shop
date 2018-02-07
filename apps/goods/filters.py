@@ -9,7 +9,7 @@ class GoodsFilter(django_filters.rest_framework.FilterSet):
     """
     price_min = django_filters.NumberFilter(name='shop_price', lookup_expr='gte')
     price_max = django_filters.NumberFilter(name='shop_price', lookup_expr='lte')
-    name = django_filters.CharFilter(name='name', lookup_expr='icontains')
+    # name = django_filters.CharFilter(name='name', lookup_expr='icontains')
     top_category = django_filters.NumberFilter(method='top_category_filter', label="根据id查找类别下的所有商品")
 
     def top_category_filter(self, queryset, name, value):
@@ -21,4 +21,4 @@ class GoodsFilter(django_filters.rest_framework.FilterSet):
 
     class Meta:
         model = Goods
-        fields = ['price_min', 'price_max', 'name']
+        fields = ['price_min', 'price_max', 'is_hot']

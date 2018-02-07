@@ -996,3 +996,20 @@ UserViewSet 重载 create  和 perform_create (返回instance实例) , 跟踪jwt
                 model = GoodsImage
                 fields = ("image",)
         
+## 8-2 热卖商品接口实现
+
+后端添加 is_hot 过滤条件
+
+* filters.py
+
+        class GoodsFilter(django_filters.rest_framework.FilterSet):
+            class Meta:
+                model = Goods
+                fields = ['price_min', 'price_max', 'is_hot']
+        
+
+前端
+    
+    <hot-sale>
+    传递了一个is_hot过滤条件
+    

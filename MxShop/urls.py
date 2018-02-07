@@ -52,7 +52,7 @@ urlpatterns = [
     url(r'^api-token-auth/', views.obtain_auth_token),
 
     # jwt 认证接口
-    url(r'^jwt_auth/', obtain_jwt_token),
+    # url(r'^jwt_auth/', obtain_jwt_token),
     url(r'^login/', obtain_jwt_token),
-    url(r'^api/authenticate/', obtain_jwt_token),
+    # url(r'^api/authenticate/', obtain_jwt_token),
 ]

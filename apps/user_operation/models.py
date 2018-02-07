@@ -15,7 +15,7 @@ class UserFav(models.Model):
     """
     user = models.ForeignKey(User, verbose_name="用户", on_delete=models.CASCADE)
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="用户", on_delete=models.CASCADE)
-    goods = models.ForeignKey(Goods, verbose_name="商品", on_delete=models.CASCADE)
+    goods = models.ForeignKey(Goods, verbose_name="商品", on_delete=models.CASCADE, help_text="商品id")
 
     add_time = models.DateTimeField(default=datetime.now, verbose_name="添加时间")
 

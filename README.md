@@ -1112,7 +1112,7 @@ lookup_field 搜索哪个字段， 默认是pk。 我们修改为 goods_id (user
     created() {
         this.productId = this.$route.params.productId;
         var productId = this.productId;
-        if(cookie.getcookie('token')) {
+        if(cookie.getCookie('token')) {
             getFav(productId).then((response) => {
                 this.hasFav = true
             }).catch(function (error) { console.log(error) } );
@@ -1143,4 +1143,33 @@ lookup_field 搜索哪个字段， 默认是pk。 我们修改为 goods_id (user
 lookup_field 是否会查询出所有的goods_id相关的用户呢？
 
 lookup_field 是在queryset结果里做的， 不是在all里做的。所以已经是当前用户的内容了。
+
+# 第9章 个人中心功能开发
+
+## 9-1 drf的api文档自动生成和功能详解
+
+http://www.django-rest-framework.org/topics/documenting-your-api/
+
+http://127.0.0.1:8000/docs/
+
+点击下面的 source_code - javascript,  直接就会在右侧显示相关的 js代码，前端可以直接使用。 python , shell 脚本也可以直接使用。
+
+usefavs 的 create  给goods 添加 description 
+
+* 方法1 
     
+        # models.py
+        goods = models.ForeignKey(Goods, help_text="商品id")
+
+* 方法2 在 serializers 中添加 help_text
+
+        class UserRegSerializer(serializers.ModelSerializer):
+            code = serializers.CharField(help_text="验证码")
+    
+* 方法3 在 filter 中添加 help_text 中添加
+
+对于需要登录和验证的方法怎样调试？
+
+在左下authentication 中，进行登录，可选token。  Scheme：JWT, Token填实际的token。也可以用session登录测试session相关的API。
+
+goods-list 中像排序是没有下拉列表的，所以结合 django-filter使用更方便。

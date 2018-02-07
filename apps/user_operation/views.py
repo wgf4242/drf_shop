@@ -14,7 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from utils.permisstions import IsOwnerOrReadOnly
 
 
-class UserFavViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
+class UserFavViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """
     用户收藏功能
     """

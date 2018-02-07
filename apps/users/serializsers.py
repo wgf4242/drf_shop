@@ -47,11 +47,11 @@ class UserRegSerializer(serializers.ModelSerializer):
                                      "max_length": "验证码格式错误",
                                      "min_length": "验证码格式错误"
                                  })
-    username = serializers.CharField(label="用户名", required=True, allow_blank=False,
+    username = serializers.CharField(label="用户名", required=True, allow_blank=False, help_text="用户名",
                                      validators=[UniqueValidator(queryset=User.objects.all(), message="用户已存在")])
 
     password = serializers.CharField(
-        style={'input_type': 'password'}, label="密码", write_only=True
+        style={'input_type': 'password'}, label="密码", write_only=True, help_text="密码"
     )
 
     # def create(self, validated_data):

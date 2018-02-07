@@ -1095,3 +1095,52 @@ jwt token 最好是配置到需要的view 里，全局配置时，如果每个�
 比对 user not owner时， 如果false就会发送一个404的错误。
 
 修改数据库 userfav id值来测试 get_queryset() 是否正常工作。
+
+## 8-5 用户收藏功能和vue联调
+
+lookup_field 搜索哪个字段， 默认是pk。 我们修改为 goods_id (userfav表里看)。提高可用性，
+
+进入商品详情页，用户查询goods有没有被收藏，可以直接填写goods的id进行查询，不需要知道数据库中原来的id是什么。
+
+    class UserFavViewSet
+        lookup_field = "goods_id"
+        
+详情页：如果用户以未登录状态访问页面时，肯定是未收藏的状态。此时无法获取用户的。
+
+前端
+
+    created() {
+        this.productId = this.$route.params.productId;
+        var productId = this.productId;
+        if(cookie.getcookie('token')) {
+            getFav(productId).then((response) => {
+                this.hasFav = true
+            }).catch(function (error) { console.log(error) } );
+        }
+        this.getDetails();
+    }
+    
+    <a v-if="hasFav" class"graybtn" @click="deleteCollect"><i class="iconfont>&#xe613;</i>已收藏</a>
+    <a v-else class="graybtn" @click="addCollect"><i = class"iconifont">&#xe613;</i>收藏</a>
+    
+    deleteCollect() {
+        delFav(this.productId).then((response) => {
+            console.log(response.data);
+            this.hasFav = false;
+        }).catch(function (error) { console.log(error) } );
+    
+    addCollect() { //加入收藏
+        addFav({
+            goods: this.productId
+        }).then((resopnse) => {
+            console.log(response.data);
+            this.hasFav = true;
+            alert('已成功加入收藏夹');
+        }).catch(function (error) { console.log(error) } );
+    }
+    
+    
+lookup_field 是否会查询出所有的goods_id相关的用户呢？
+
+lookup_field 是在queryset结果里做的， 不是在all里做的。所以已经是当前用户的内容了。
+    

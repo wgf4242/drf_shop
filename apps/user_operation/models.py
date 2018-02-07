@@ -25,7 +25,7 @@ class UserFav(models.Model):
         unique_together = ("user", "goods")
 
     def __str__(self):
-        return self.user.name
+        return self.user.username
 
 
 class UserLeavingMessage(models.Model):

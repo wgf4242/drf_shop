@@ -48,9 +48,8 @@ models相关
 
 * 替换系统用户
 
-    
-    # settings.py , UserProfile位置是在 users.models.UserProfile
-    AUTH_USER_MODEL = 'users.UserProfile'
+        # settings.py , UserProfile位置是在 users.models.UserProfile
+        AUTH_USER_MODEL = 'users.UserProfile'
 
 ## 3-3 goods的model设计
 通过一个model完成所有级别的类。定义从属关系，不定死关系。 指向自己这张表---`"self"`
@@ -1064,4 +1063,35 @@ https://docs.djangoproject.com/en/1.11/ref/models/options/#unique-together
 * user_operation.serializsers.UserFavSerializer
 
         class Meta:
-            validators = [UniqueTogetherValidator(queryset=UserFav.objects.all(), fields=('user', 'goods'))]        
+            validators = [UniqueTogetherValidator(queryset=UserFav.objects.all(), fields=('user', 'goods'))]
+            
+## 8-4 drf的权限验证
+
+没有配置权限产生的问题：可以删除其他用户的收藏记录
+
+
+http://www.django-rest-framework.org/api-guide/permissions/#examples
+
+user是否是当前用户
+    
+    class IsOwnerOrReadOnly(permissions.BasePermission):
+        def has_object_permission(self, request, view, obj):
+            if request.method in permissions.SAFE_METHODS:
+                return True
+    
+            return obj.user == request.user
+
+只获取当前用户的 userfav  重载 getqueryset
+    
+    class UserFavViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
+        def get_queryset(self):
+            return UserFav.objects.filter(user=self.request.user)
+    
+    
+jwt token 最好是配置到需要的view 里，全局配置时，如果每个都加token，当token过期时，在访问goods 商品的列表这种不需要登录的都看不了。
+
+测试： 通过login获取token ， 再把token设置到header里 JWT <token> ，然后进行delete请求。 
+
+比对 user not owner时， 如果false就会发送一个404的错误。
+
+修改数据库 userfav id值来测试 get_queryset() 是否正常工作。

@@ -6,14 +6,15 @@ from django.contrib.auth import get_user_model
 
 from goods.models import Goods
 
-# User = get_user_model()
+User = get_user_model()
 
 
 class UserFav(models.Model):
     """
     用户收藏
     """
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="用户", on_delete=models.CASCADE)
+    user = models.ForeignKey(User, verbose_name="用户", on_delete=models.CASCADE)
+    # user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="用户", on_delete=models.CASCADE)
     goods = models.ForeignKey(Goods, verbose_name="商品", on_delete=models.CASCADE)
 
     add_time = models.DateTimeField(default=datetime.now, verbose_name="添加时间")
@@ -21,6 +22,7 @@ class UserFav(models.Model):
     class Meta:
         verbose_name = '用户收藏'
         verbose_name_plural = verbose_name
+        unique_together = ("user", "goods")
 
     def __str__(self):
         return self.user.name

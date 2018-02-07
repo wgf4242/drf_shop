@@ -1013,3 +1013,55 @@ UserViewSet 重载 create  和 perform_create (返回instance实例) , 跟踪jwt
     <hot-sale>
     传递了一个is_hot过滤条件
     
+## 8-3 用户收藏接口实现
+
+* vies.py
+        
+        class UserFavViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
+            queryset = UserFav.objects.all()
+            serializer_class = UserFavSerializer
+    
+
+现在问题是不应该可选择用户，来进行收藏的，需要的是当前用户。
+
+http://www.django-rest-framework.org/api-guide/validators/#currentuserdefault
+
+获取当前用户, 用 user 覆盖掉, 如果需要删除则要把 id 返回回来. 将 `id` 添加到`fields`.
+
+    class UserFavSerializer(serializers.ModelSerializer):
+        user = serializers.HiddenField(
+            default=serializers.CurrentUserDefault()
+        )
+    
+        class Meta:
+            model = UserFav
+            fields = ("user", "goods", "id")
+
+获取到的 goods 有时候需要名称,以后再说.
+
+* 删除的功能如何来做?
+
+http://127.0.0.1:8000/userfavs/1/ 发送 `delete` 方法,返回 `204 no content`, 表示删除是成功的.
+
+* 不严谨的地方--收藏的地方create上
+
+`serializers` 中有些地方要验证,反复收藏同一个商品时,会生成多条记录---不合理的.
+
+用到 django.model 里的设置 在meta 里设置 unique_together
+
+https://docs.djangoproject.com/en/1.11/ref/models/options/#unique-together
+
+    unique_together = ("user", "goods")
+
+清空表，再进行makemigration, migrate ， 防止出错。
+
+收藏2次时报错为
+
+    { "non_field_errors": [ "字段 user, goods 必须能构成唯一集合。" ] }
+    
+可以用drf的uniqueTogetherValidator来自定义信息，  validators可以作用于每个字段上的，也可以作用于meta里。
+
+* user_operation.serializsers.UserFavSerializer
+
+        class Meta:
+            validators = [UniqueTogetherValidator(queryset=UserFav.objects.all(), fields=('user', 'goods'))]        

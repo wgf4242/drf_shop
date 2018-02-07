@@ -29,6 +29,6 @@ for goods_detail in row_data:
 
     for goods_image in goods_detail["images"]:
         goods_image_instance = GoodsImage()
-        goods_image_instance.image_url = goods_image
+        goods_image_instance.image = goods_image
         goods_image_instance.goods = goods
         goods_image_instance.save()

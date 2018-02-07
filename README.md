@@ -982,3 +982,17 @@ UserViewSet 重载 create  和 perform_create (返回instance实例) , 跟踪jwt
         return serializer.save()
  
 前端退出：将cookie的token和name清空，跳转到登录页面。
+
+# 第8章 商品详情页功能
+
+## 8-1 viewsets实现商品详情页接口
+
+商品详情：左侧轮播图，右侧详情，下面副文本。
+
+* serializers.py
+
+        class GoodsImageSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = GoodsImage
+                fields = ("image",)
+        

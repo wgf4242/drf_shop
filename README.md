@@ -1387,3 +1387,71 @@ members/receive.vue
 	updateDistrict(data) {
 		this.receiveInfoArr[this.currentIndex].district = data.value;
 	}
+
+# 第10章 购物车、订单管理和支付功能
+
+## 10-1 购物车功能需求分析和加入到购物车实现
+
+
+页面结构
+
+	购物车商品列表
+		购物车已存在的商品，再次添加时增加数量。后台直接更新数量。
+		删除=>直接删除商品
+	金额
+	配送地址
+
+	购物车已存在的商品，再次添加时增加数量。后台直接更新数量。
+
+* 更新 model 的 meta创建联合主键
+
+	class ShoppingCart(models.Model):
+	    class Meta:
+	        unique_together = ("user", "goods")
+
+
+* 不用 ModelSerializers原因： 我们需要的是数量加一，下面在 is_valid 时unique_together 就报错了，即使重写serializer的create方法也无效，所以用底层的seriailizer。
+
+		class CreateModelMixin(object):
+		    def create(self, request, *args, **kwargs):
+		        serializer = self.get_serializer(data=request.data)
+		        serializer.is_valid(raise_exception=True)
+		        self.perform_create(serializer)
+		        headers = self.get_success_headers(serializer.data)
+		        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+不在view层做：无文档，代码分离效果差。最好是在serializers来做，会有文档。代码分离性也好。
+
+* validated_data 是验证过的，它之前的叫initial_data 是未验证过的
+
+* 重载 Serializer 的 create 方法,使购物车已存在的商品，再次添加时增加数量。后台直接更新数量。
+
+        class ShopCartSerializer(serializers.Serializer):
+            def create(self, validated_data):
+                user = self.context["request"].user
+                nums = validated_data["nums"]
+                goods = validated_data["goods"]
+                existed = ShoppingCart.objects.filter(user=user, goods=goods)
+
+	        if existed:
+	            existed = existed[0]
+	            existed.nums += nums
+	            existed.save()
+	        else:
+	            existed = ShoppingCart.objects.create(**validated_data)
+
+* urls.py
+
+        router.register(r'shopcarts', ShoppingCartViewSet, base_name='shopcarts')
+
+* trade/views.py
+
+        class ShoppingCartViewSet(viewsets.ModelViewSet):
+            permission_classes = (IsAuthenticated, IsOwnerOrReadOnly)
+            authentication_classes = (JSONWebTokenAuthentication, SessionAuthentication)
+            serializer_class = ShopCartSerializer
+           
+            def get_queryset(self):
+                return ShoppingCart.objects.filter(user=self.request.user)
+        

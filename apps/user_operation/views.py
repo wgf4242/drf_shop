@@ -1,16 +1,12 @@
-from rest_framework.authentication import SessionAuthentication
-
-from user_operation.models import UserFav, UserLeavingMessage
-from django.shortcuts import render
 from rest_framework import mixins, viewsets
-
-# Create your views here.
-from user_operation.serializsers import UserFavSerializer, UserFavDetailSerializer, LeavingMessageSerializer
-
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
-from rest_framework.permissions import IsAuthenticated
-
+from user_operation.models import UserFav, UserLeavingMessage, UserAddress
+# Create your views here.
+from user_operation.serializsers import UserFavSerializer, UserFavDetailSerializer, LeavingMessageSerializer, \
+    AddressSerializer
 from utils.permisstions import IsOwnerOrReadOnly
 
 
@@ -57,3 +53,24 @@ class LeavingMessageViewSet(mixins.ListModelMixin, mixins.DestroyModelMixin, mix
 
     def get_queryset(self):
         return UserLeavingMessage.objects.filter(user=self.request.user)
+
+
+class AddressViewSet(viewsets.ModelViewSet):
+    """
+    收货地址管理
+    list:
+        获取收货地址
+    create:
+        添加收货地址
+    update:
+        更新收货地址
+    delete:
+        删除收货地址
+
+    """
+    permission_classes = (IsAuthenticated, IsOwnerOrReadOnly)
+    authentication_classes = (JSONWebTokenAuthentication, SessionAuthentication)
+    serializer_class = AddressSerializer
+
+    def get_queryset(self):
+        return UserAddress.objects.filter(user=self.request.user)

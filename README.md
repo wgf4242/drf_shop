@@ -1321,3 +1321,40 @@ http://www.django-rest-framework.org/api-guide/parsers/#multipartparser
 * user_operation.models.UserLeavingMessage
 
       file = models.FileField(upload_to="message/images/", verbose_name="上传的文件", help_text="上传的文件")
+
+
+## 9-7 用户收货地址列表页接口开发
+
+*  修改model(这时是为了简单)， makemigration, migrate
+
+        # UserAddress
+        province = models.CharField(max_length=100, default="", verbose_name="省")
+        city = models.CharField(max_length=100, default="", verbose_name="市")
+        district = models.CharField(max_length=100, default="", verbose_name="区域")
+    
+    
+        # user_operation.serializsers.AddressSerializer
+        class AddressViewSet(viewsets.ModelViewSet):
+            permission_classes = (IsAuthenticated, IsOwnerOrReadOnly)
+            authentication_classes = (JSONWebTokenAuthentication, SessionAuthentication)
+            serializer_class = AddressSerializer
+            def get_queryset(self):
+                return UserAddress.objects.filter(user=self.request.user)
+    
+* serializers 这里可以添加一些验证的
+
+        # user_operation.serializsers.AddressSerializer
+        class AddressSerializer(serializers.ModelSerializer):
+            user = serializers.HiddenField(
+                default=serializers.CurrentUserDefault()
+            )
+            add_time = serializers.DateTimeField(read_only=True, format='%Y-%m-%d %H:%M')
+            class Meta:
+                model = UserAddress
+                fields = ("id", "user", "province", "city", "district", "address", "signer_name", "signer_mobile", "add_time")
+    
+* 在router中注册
+
+        # urls.py
+        router.register(r'address', AddressViewSet, base_name='address')
+    

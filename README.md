@@ -1455,3 +1455,96 @@ members/receive.vue
             def get_queryset(self):
                 return ShoppingCart.objects.filter(user=self.request.user)
         
+
+## 10-2 修改购物车数量
+
+
+我们希望传递goods_id 来处理事务， 而不是本身的id。
+
+	trade.views.ShoppingCartViewSet
+	lookup_field = "goods_id"
+
+* rest_framework.serializers.Serializer 继承 BaseSerializer , update方法会 raise not implements。所以需要我手动重载这些方法。
+
+* rest_framework.serializers.ModelSerializer 会重载这些方法。
+
+        class ShopCartSerializer(serializers.Serializer):
+            def update(self, instance, validated_data):
+                # 修改商品数量
+                instance.nums = validated_data["nums"]
+                instance.save()
+                return instance
+
+## 10-3 vue和购物车接口联调
+
+购物车页面需要获取商品的详情。
+
+前端相关代码
+
+	export const getShopCarts = params => {return axios.get(`${host}/shopcarts/`)}
+	export const addShopCart = params => {return axios.get(`${host}/shopcarts/`), params}
+	export const updateShopCart = {goodsId, params} => {return axios.patch(`${host}/shopcarts/`)}
+	export const deleteShopCart = goodsId => {return axios.delete(`${host}/shopcarts/`)}
+
+	addShoppingCart() { //加入购物车
+		goods: this.productId, //商品id
+		nums: this.buyNum, //购买数量
+	}).then((response) => {
+		this.$refs.model.setShow();
+		// 更新 store 数据
+		this.$store.dispatch('setShopList');
+	}).catch(function (error)) {console.log(error)}
+
+	deleteGoods(index, id) { //移除购物车
+		deleteShopCart(id).then((response) => {
+			console.log(response.data);
+			this.goods_list.splice(index, 1);
+
+			//更新store数据
+			this.$store.dispatch('setShopList');
+		}).catch(function (error)) {console.log(error)}
+	}
+
+	computed: {
+		...mapGetters({
+			goods_list: 'goods_list',
+			userInfo: 'userInfo'
+		})
+	}
+
+	created() {
+		//请求购物车商品
+		getShopCarts().then((response) => {
+			//更新store数据
+			state.goods_list.goods_list = response.data;
+			console.log(response.data)
+			var totalPrice = 0
+			response.data.forEach(function(entry) {
+				totalPrice += entry.goods.shop_price*entry.nums
+			});
+			state.goods_list.totalPrice = totalPrice;
+		}).catch(function (error)) {console.log(error)}
+		this.getAllAddr()
+	}
+
+	reduceCartNum(index, id) { //删除数量
+		if(this.goods_list.goods_list[index].nums<=1) {
+			this.deleteGoods(index, id)
+		}else{
+			updateShopCart(id, {
+				nums: this.goods.goods_list[index].nums-1
+			}).then((response) => {
+				this.goods.goods_list[index].nums = this.goods.goods_list[index].nums-1
+				// 更新store数据
+				this.$store.dispatch('setShopList');
+				// 更新总价
+				this.setTotalPrice();
+			}).catch(function (error)) {console.log(error)}
+		}
+	}
+
+	getAllAddr() { //获得所有配送地址
+		getAddress().then((response) => {
+			this.addrInfo = response.data;
+		}).catch(function (error)) {console.log(error)}
+	}

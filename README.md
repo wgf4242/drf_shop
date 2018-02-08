@@ -1357,4 +1357,33 @@ http://www.django-rest-framework.org/api-guide/parsers/#multipartparser
 
         # urls.py
         router.register(r'address', AddressViewSet, base_name='address')
-    
+
+## 9-8 vue和收货地址接口联调
+
+members/receive.vue
+
+	export const delAddress = addressId => {return axios.delete(`{host}/address/`)}
+	export const updateAddress = {addressId, params} => {return axios.patch(`{host}/address/`)}
+	export const getAddress = () => {return axios.get(`{host}/address/`)}
+
+
+	created() {
+		this.getReceiveInfo();
+	}
+
+	getReceiveInfo() {
+		getAddress().then((response) => {
+			console.log(response.data);
+			this.receiveInfoArr = response.data;
+		}).catch(function (error) {console.log(error)})
+	}
+
+	updateProvince(data) {
+		this.receiveInfoArr[this.currentIndex].province = data.value;
+	}
+	updateCity(data) {
+		this.receiveInfoArr[this.currentIndex].city = data.value;
+	}
+	updateDistrict(data) {
+		this.receiveInfoArr[this.currentIndex].district = data.value;
+	}

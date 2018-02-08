@@ -23,7 +23,7 @@ from rest_framework_jwt.views import obtain_jwt_token
 
 from MxShop.settings import MEDIA_ROOT
 from goods.views import GoodsListViewSet, CategoryViewSet
-from user_operation.views import UserFavViewSet
+from user_operation.views import UserFavViewSet, LeavingMessageViewSet
 from users.views import SmsCodeGViewSet, UserViewSet
 
 router = DefaultRouter()
@@ -36,7 +36,11 @@ router.register(r'codes', SmsCodeGViewSet, base_name='codes')
 
 router.register(r'users', UserViewSet, base_name='users')
 
+# 收藏
 router.register(r'userfavs', UserFavViewSet, base_name='userfavs')
+
+# 留言
+router.register(r'messages', LeavingMessageViewSet, base_name='messages')
 
 # router.register(r'hotsearchs', HotSearchViewset, base_name='hotsearchs')
 

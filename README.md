@@ -1173,3 +1173,151 @@ usefavs 的 create  给goods 添加 description
 在左下authentication 中，进行登录，可选token。  Scheme：JWT, Token填实际的token。也可以用session登录测试session相关的API。
 
 goods-list 中像排序是没有下拉列表的，所以结合 django-filter使用更方便。
+
+## 9-2 动态设置serializer和permission获取用户信息
+
+用户中心：包含修改姓名、出生日期、性别、电子邮件---包括一个邮件验证，手机默认灰色不可改
+
+使用retrieve时，进入个人中心的时候并不知道用户id的,那么在凑url时凑不出一个id。
+
+解决方法1：创建时返回id
+
+解决方法2：重载get_object方法
+
+    def get_object(self):
+        return self.request.user
+
+权限问题：获取当前用户时必须是登录的状态
+
+但用户注册时不可能在登录的状态下，不能用IsAuthenticated来完成。
+
+如果是注册状态是 AllowAny, 或者是一个空数组。
+
+动态设置权限：用户注册时没有权限，get_object时一个Authentic状态。研究源码：根据GenericAPIView。
+
+找到 `rest_framework.views.APIView#get_permissions` ，我们可以重载这个函数, `self.action` 只有使用 `ViewSet` 才有 `action` 这个好处。
+
+    authentication_classes = (JSONWebTokenAuthentication, authentication.SessionAuthentication)
+
+添加了 `JSONWebTokenAuthentication` 就不会再弹登录框了。
+
+使用 `http://127.0.0.1:8000/docs/` 的 `Authentication#token, Scheme`填JWT，对user/1进行测试，返回了user mobile,
+
+我们在返回用户的时候希望用另一个serializer进行序列化，
+
+    class UserDetailSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = User
+            fields = ("name", "birthday", "gender", "mobile", "mail")
+
+如果使用这个接口进行用户注册的话，会对上面的字段逐一验证，这个连用户名和密码都没有，所以不能用这个序列化。
+
+
+动态获取serializer：重载 get_serializer_class(跟进源码查到)
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return UserDetailSerializer
+        elif self.action == "create":
+            return UserRegSerializer
+
+        return UserDetailSerializer
+
+## 9-3 vue和用户接口信息联调
+
+`vue: views/member/userinfo.vue`
+
+`/user/1`
+
+## 9-4 用户个人信息修改
+
+给 `UserViewSet` 添加 `mixins.UpdateModelMixin` 。支持 `put,patch` 操作。
+
+    vue: return axios.patch(`$(local_host}/users/1/`, params)
+
+## 9-5 用户收藏功能
+
+	#useroperation/views.py
+	class UserFavDetailSerializer(serializers.ModelSerializer):
+	    goods = GoodsSerializer()
+
+	    class Meta:
+		model = UserFav
+		fields = ("goods", "id")
+
+`lookup_field` --- 前端要删除时也要传递 `goods_id`
+
+    class UserFavViewSet
+        lookup_field = "goods_id"
+        def get_serializer_class(self):
+            if self.action == "list":
+                return UserFavDetailSerializer
+            elif self.action == "create":
+                return UserFavSerializer
+            return UserFavSerializer
+
+##　9-6 用户留言功能
+
+需要注意添加id，删除的时候需要使用。
+
+再添加个 "add_time"，但我们不想写这个时间，并格式化它
+
+    	add_time = serializers.DateTimeField(read_only=True, format='%Y-%m-%d %H:%M')
+
+		class LeavingMessageSerializer(serializers.ModelSerializer):
+		    user = serializers.HiddenField(
+			default=serializers.CurrentUserDefault()
+		    )
+
+		    class Meta:
+			model = UserLeavingMessage
+			fields = ("user", "message_type", "subject", "message", "file", "id", "add_time")
+
+
+		#views.py
+		class LeavingMessageViewSet(mixins.ListModelMixin, mixins.DestroyModelMixin, mixins.CreateModelMixin,
+					    viewsets.GenericViewSet):
+		    """
+		    list:
+			获取用户留言
+		    create:
+			添加留言
+		    delete:
+			删除留言
+		    """
+		    permission_classes = (IsAuthenticated, IsOwnerOrReadOnly)
+		    authentication_classes = (JSONWebTokenAuthentication, SessionAuthentication)
+		    serializer_class = LeavingMessageSerializer
+
+		    def get_queryset(self):
+			return UserLeavingMessage.objects.filter(user=self.request.user)
+
+
+* 前端代码
+
+	delMessage = messageId => {return axios.delete(`${local_host}/messages`)
+		deleteMessage(id) {
+			alert("删除成功")
+		}).catch(function (error) {console.log(error); });
+	}
+	export const addMessage = params  => {return asxios.post(`$(local_host}/messages/`, params, {headers: {'Content-Type': 'multipart/form-data' }})}
+	submitMessage() {
+		const formData = new FormData();
+		formData.append('file', this.file);
+		formData.append('subject', this.subject);
+		formData.append('message', this.message);
+		formData.append('message_type', this.message_type);
+		addMessage(formData).then((response) => {
+			this.getMessage();
+		}).catch(function (error) {console.log(error); });
+	}
+
+* drf 是怎样解析的呢？
+
+http://www.django-rest-framework.org/api-guide/parsers/#multipartparser
+
+.media_type: multipart/form-data
+
+* user_operation.models.UserLeavingMessage
+
+      file = models.FileField(upload_to="message/images/", verbose_name="上传的文件", help_text="上传的文件")

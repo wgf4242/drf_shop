@@ -1548,3 +1548,82 @@ members/receive.vue
 			this.addrInfo = response.data;
 		}).catch(function (error)) {console.log(error)}
 	}
+
+## 10-4 订单管理接口-1_1
+
+`order_sn` 订单号是由后台生成的， `model` 如果不设置会验证，先设置为空。
+
+* trade.models.OrderInfo
+
+    	order_sn = models.CharField(null=True, blank=True)
+	
+
+`makemigrations, migrate`
+
+`address` 不要用外键，我们要保存订单当时填写的地址。
+
+* serializers.py
+
+不允许提交用户，订单状态，订单号，交易号。支付时间。
+
+		
+		class OrderSerializer(serializers.ModelSerializer):
+		    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+		    pay_status = serializers.CharField(read_only=True)
+		    trade_no = serializers.CharField(read_only=True)
+		    order_sn = serializers.CharField(read_only=True)
+		    pay_time = serializers.DateTimeField(read_only=True)
+		    add_time = serializers.DateTimeField(read_only=True)
+
+		    def generate_order_sn(self):
+		        # 当前时间+userif+随机数
+		        from random import Random
+		        random_ins = Random()
+		        order_sn = "{time_str}{user_id}{ranstr}".format(time_str=time.strftime("%Y%m%d%H%M%S"),
+		                                                        user_id=self.context["request"].user.id,
+		                                                        ranstr=random_ins.randint(10, 99))
+		        return order_sn
+
+		    def validate(self, attrs):
+		        attrs["order_sn"] = self.generate_order_sn()
+		        return attrs
+
+		    class Meta:
+		        model = OrderInfo
+		        fields = "__all__"
+
+
+* urls.py
+
+		# 订单相关
+		router.register(r'orders', OrderViewSet, base_name='orders')
+
+
+* views.py
+
+不允许修改订单，所以这里不用 `ModelViewSet`
+
+删除时希望把相关的 `goods` 信息也删除，测试了一下，是自动删除的。满足了要求。
+
+		class OrderViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+
+		    permission_classes = (IsAuthenticated, IsOwnerOrReadOnly)
+		    authentication_classes = (JSONWebTokenAuthentication, SessionAuthentication)
+		    serializer_class = OrderSerializer
+
+		    def get_queryset(self):
+		        return OrderInfo.objects.filter(user=self.request.user)
+
+		    def perform_create(self, serializer):  # 这里是调用 serializer 的 save
+		        order = serializer.save()
+		        shop_carts = ShoppingCart.objects.filter(user=self.request.user)
+		        for shop_cart in shop_carts:
+		            order_goods = OrderGoods()
+		            order_goods.goods = shop_cart.goods
+		            order_goods.nums = shop_cart.nums
+		            order_goods.order = order
+		            order_goods.save()
+
+		            shop_cart.delete()
+		        return order
+

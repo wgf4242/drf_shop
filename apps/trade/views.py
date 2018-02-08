@@ -1,12 +1,11 @@
-from django.shortcuts import render
+# Create your views here.
+from rest_framework import viewsets, mixins
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
-from rest_framework.authentication import SessionAuthentication
-# Create your views here.
-from rest_framework import viewsets
 
-from trade.models import ShoppingCart
-from trade.serializers import ShopCartSerializer, ShopCartDetailSerializer
+from trade.models import ShoppingCart, OrderInfo, OrderGoods
+from trade.serializers import ShopCartSerializer, ShopCartDetailSerializer, OrderSerializer
 from utils.permisstions import IsOwnerOrReadOnly
 
 
@@ -35,3 +34,34 @@ class ShoppingCartViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return ShoppingCart.objects.filter(user=self.request.user)
 
+
+class OrderViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    """
+    订单管理
+    list:
+        获取个人订单
+    delete:
+        删除订单
+    create:
+        新增订单
+    """
+    # 不允许修改订单，所以不用 ModelViewSet
+    permission_classes = (IsAuthenticated, IsOwnerOrReadOnly)
+    authentication_classes = (JSONWebTokenAuthentication, SessionAuthentication)
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        return OrderInfo.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):  # 这里是调用 serializer 的 save
+        order = serializer.save()
+        shop_carts = ShoppingCart.objects.filter(user=self.request.user)
+        for shop_cart in shop_carts:
+            order_goods = OrderGoods()
+            order_goods.goods = shop_cart.goods
+            order_goods.nums = shop_cart.nums
+            order_goods.order = order
+            order_goods.save()
+
+            shop_cart.delete()
+        return order

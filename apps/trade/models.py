@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 
 from goods.models import Goods
 
+
 # User = get_user_model()
 
 
@@ -35,16 +36,16 @@ class OrderInfo(models.Model):
     ORDER_STATUS = (
         ("success", "成功"),
         ("cancel", "取消"),
-        ("cancel", "待支付"),
+        ("paying", "待支付"),
     )
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="用户", on_delete=models.CASCADE)
-    order_sn = models.CharField(max_length=30, unique=True, verbose_name="订单号")
+    order_sn = models.CharField(null=True, blank=True, max_length=30, unique=True, verbose_name="订单号")
     trade_no = models.CharField(max_length=100, unique=True, null=True, blank=True, verbose_name="交易号")
-    pay_status = models.CharField(choices=ORDER_STATUS, max_length=10, verbose_name="订单状态")
+    pay_status = models.CharField(choices=ORDER_STATUS, default="paying", max_length=10, verbose_name="订单状态")
     post_script = models.CharField(max_length=11, verbose_name="订单留言")
     order_mount = models.FloatField(default=0.0, verbose_name="订单金额")
-    pay_time = models.DateField(null=True, blank=True, verbose_name="支付时间")
+    pay_time = models.DateTimeField(null=True, blank=True, verbose_name="支付时间")
 
     # 用户信息
     address = models.CharField(max_length=100, default="", verbose_name="收货地址")
@@ -77,3 +78,4 @@ class OrderGoods(models.Model):
 
     def __str__(self):
         return self.order.order_sn
+

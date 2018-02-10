@@ -1711,3 +1711,69 @@ members/receive.vue
             alert(this.totalPrice)
         }).catch(function(error) {console.log(error); })
     }
+
+## 10-7 pycharm远程代码调试
+
+第三方服务API的回调函数，都是远程的，需要远程调试远程服务器。
+
+将代码上传到服务器中。
+
+Tools - Deployment - 添加一个sftp服务器 name:mxshop
+
+ssh
+
+	mkdir projects
+	cd projects
+
+pycharm sftp:
+
+* Connection
+
+		host: 47.92.87.172
+		user name:
+		password:
+
+* Mapping
+
+		/root/project/mxshop
+
+点击 Tools - Deployment - Upload 进行上传
+
+* 工具： winSCP(flashfxp一样), 使用sftp连接。
+
+* 建立虚拟环境
+
+http://projectsedu.com/2017/08/15/centos7-下通过nginx-uwsgi部署django应用/
+
+maridb 和 mysql 是一致的。配置好权限及阿里云安全组规则。
+
+使用navicat连接到服务器，新建数据库，然后将本地数据库传输上去.
+
+navicat 如果上传失败：
+
+    navicat菜单： 工具-监控-服务器变量 搜索 package, max_allow_packet 改大一些。
+
+本地 settings.py 设置,  
+
+	DATABASES = {
+	    'default': {
+	        'HOST': '47.x.x.x',
+	    }
+	}
+
+
+这条语句有'%' ,不会添加localhost的权限,需要另添加一条语句到 localhost.
+
+    GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '123456' WITH GRANT OPTION;
+    GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY '123456' WITH GRANT OPTION;
+    本机可用localhost，%通配所有远程主机；
+
+* PyCharm 上传某个文件
+
+左侧先点击settings.py,再点击 Deployment-upload 上传.
+
+* 远程服务器端 python manage.py runserver
+
+PyCharm 配置服务器的解释器，Settings - Project Interpreter, Add remote - SSH Credentials, 填写好服务器相关信息。
+
+Run - Debug, 会启动服务器端的调试。

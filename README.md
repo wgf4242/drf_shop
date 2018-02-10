@@ -1549,7 +1549,7 @@ members/receive.vue
 		}).catch(function (error)) {console.log(error)}
 	}
 
-## 10-4 订单管理接口-1_1
+## 10-4,5 订单管理接口
 
 `order_sn` 订单号是由后台生成的， `model` 如果不设置会验证，先设置为空。
 
@@ -1627,3 +1627,87 @@ members/receive.vue
 		            shop_cart.delete()
 		        return order
 
+
+## 10-6 vue个人中心订单接口调试
+
+订单详情-序列化时应该显示出商品列表
+
+`OrderGoods` 和 `OrderInfo` 通过 `order` 来连接，添加 `related_name` .
+
+    class OrderGoods(models.Model):
+        order = models.ForeignKey(OrderInfo, verbose_name="订单信息", on_delete=models.CASCADE, related_name="goods")
+
+
+    class OrderGoodsSerializer(serializers.ModelSerializer):
+        goods = GoodsSerializer(many=False)
+
+    class OrderDetailSerializer(serializers.ModelSerializer):
+        goods = OrderGoodsSerializer(many=True)
+
+    class OrderViewSet
+        def get_serializer_class(self):
+            if self.action == "retrieve":
+                return OrderDetailSerializer
+            return OrderSerializer
+
+前端
+
+    export const gerOrders = () => {return axios.get(`${host}/orders`)}
+    export const delOrder = orderId => {return axios.delete(`${host}/orders` + orderId)}
+    export const createOrder = params => {return axios.post(`${host}/orders`, params)}
+    export const getOrderDetail = orderId => {return axios.get(`${host}/orders` + orderId)}
+
+    selectAddr(id) { //选择配送地址
+        this.addressActive = id;;
+        var cur_address = '';
+        var cur_name = '';
+        var cur_mobile = '';
+        this.addrInfo.forEach(function(addrItem) {
+            if(addrItem.id == id){
+                cur_address = addrItem.province + addrItem.city + addrItem.district + addrItem.detail;
+                cur_name = addrItem.signer_name;
+                cur_mobile = addrItem.signer_mobile;
+            }
+        })
+        this.address = cur_address;
+        this.signer_mobile = cur_mobile;
+    }
+
+    checkout() {
+        if(this.addrInfo.length == 0) {
+            alert("请选择收货地址")
+        } else {
+            createOrder({
+                post_script: htis.post_script,
+                address: this.address,
+                signer_name: this.signer_name,
+                signer_mobile: this.signer_mobile,
+                order_mount: this.totalPrice
+            }).then((response) => {
+                alert("订单创建成功")
+            }).catch(function(error) {console.log(error); })
+        }
+    }
+
+    getOrder() {
+        getOrders().then((response) => {
+            this.orders = response.data;
+        }).catch(function(error) {console.log(error); })
+    },
+    cancelOrder(id) {
+        alert('您确认要取消该订单么？取消后此订单将视为无效订单');
+        delOrder(id).then((response) => {
+            alert('订单删除成功')
+        }).catch(function(error) {console.log(error); })
+    }
+    getOrderInfo() {
+        getOrderDetail(this.orderId).then((response) => {
+            this.orderInfo = response.data;
+            var totalPrice = 0;
+            response.data.goods.forEach(function (entry) {
+                totalPrice += entry.goods_num*entry.goods.shop_price
+            });
+            this.totalPrice = totalPrice;
+            alert(this.totalPrice)
+        }).catch(function(error) {console.log(error); })
+    }

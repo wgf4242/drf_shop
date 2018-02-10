@@ -66,7 +66,7 @@ class OrderGoods(models.Model):
     """
     订单的商品详情
     """
-    order = models.ForeignKey(OrderInfo, verbose_name="订单信息", on_delete=models.CASCADE)
+    order = models.ForeignKey(OrderInfo, verbose_name="订单信息", on_delete=models.CASCADE, related_name="goods")
     goods = models.ForeignKey(Goods, verbose_name="商品", on_delete=models.CASCADE)
     goods_num = models.IntegerField(default=0, verbose_name="商品数量")
 

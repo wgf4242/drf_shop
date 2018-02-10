@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 from trade.models import ShoppingCart, OrderInfo, OrderGoods
-from trade.serializers import ShopCartSerializer, ShopCartDetailSerializer, OrderSerializer
+from trade.serializers import ShopCartSerializer, ShopCartDetailSerializer, OrderSerializer, OrderDetailSerializer
 from utils.permisstions import IsOwnerOrReadOnly
 
 
@@ -26,7 +26,7 @@ class ShoppingCartViewSet(viewsets.ModelViewSet):
     lookup_field = "goods_id"
 
     def get_serializer_class(self):
-        if self.action == 'list':
+        if self.action == 'retrieve':
             return ShopCartDetailSerializer
         else:
             return ShopCartSerializer
@@ -35,7 +35,7 @@ class ShoppingCartViewSet(viewsets.ModelViewSet):
         return ShoppingCart.objects.filter(user=self.request.user)
 
 
-class OrderViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+class OrderViewSet(mixins.CreateModelMixin,mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     """
     订单管理
     list:
@@ -52,6 +52,11 @@ class OrderViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Destro
 
     def get_queryset(self):
         return OrderInfo.objects.filter(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return OrderDetailSerializer
+        return OrderSerializer
 
     def perform_create(self, serializer):  # 这里是调用 serializer 的 save
         order = serializer.save()

@@ -1777,3 +1777,35 @@ navicat 如果上传失败：
 PyCharm 配置服务器的解释器，Settings - Project Interpreter, Add remote - SSH Credentials, 填写好服务器相关信息。
 
 Run - Debug, 会启动服务器端的调试。
+
+## 10-9 支付宝公钥、私钥和沙箱环境的配置
+
+[蚂蚁金服开放平台](https://docs.open.alipay.com/)
+
+1. 开发者中心-开发服务-沙箱应用-设置公钥
+2. 开发者中心-文档中心-电脑网站支付
+3. API列表-统一收单下单并支付页面接口
+4. 生成RSA密钥-非JAVA适用版本，2048。生成。
+5. 填写好公钥。（保存好公钥私钥）
+
+        前后加上 begin privite key ,end privite key .保存到项目中，
+        private_2048.txt
+        pub_2048.txt
+
+6. 把支付宝的公钥复制出来。保存到项目中 alipay_key_2048.txt.
+
+## 10-10 支付宝开发文档解读
+
+把项目 Interpreter 改为本地。
+
+biz_content, sign, sign_type 比较重要
+
+在virtualenv中安装 `pip install pycryptodome`
+
+将写好的 alipay.py 放到 utils中。
+
+    https://github.com/liyaopinner/mxshop_sources/blob/master/alipay.py
+
+[自实现签名](https://docs.open.alipay.com/291/106118)
+
+

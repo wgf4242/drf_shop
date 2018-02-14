@@ -23,7 +23,7 @@ from rest_framework_jwt.views import obtain_jwt_token
 import xadmin
 from MxShop.settings import MEDIA_ROOT
 from goods.views import GoodsListViewSet, CategoryViewSet
-from trade.views import ShoppingCartViewSet, OrderViewSet
+from trade.views import ShoppingCartViewSet, OrderViewSet, AliPayView
 from user_operation.views import UserFavViewSet, LeavingMessageViewSet, AddressViewSet
 from users.views import SmsCodeGViewSet, UserViewSet
 
@@ -68,5 +68,7 @@ urlpatterns = [
     # jwt 认证接口
     # url(r'^jwt_auth/', obtain_jwt_token),
     url(r'^login/', obtain_jwt_token),
-    # url(r'^api/authenticate/', obtain_jwt_token),
+    # url(r'^api/authenticate/', obtain_jwt_token),\
+    url(r'^alipay/return/', AliPayView.as_view(), name="alipay"),
+
 ]

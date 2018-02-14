@@ -34,9 +34,11 @@ class OrderInfo(models.Model):
     订单
     """
     ORDER_STATUS = (
-        ("success", "成功"),
-        ("cancel", "取消"),
-        ("paying", "待支付"),
+        ("TRADE_SUCCESS", "成功"),
+        ("TRADE_CLOSED", "超时关闭"),
+        ("WAIT_BUYER_PAY", "交易创建"),
+        ("TRADE_FINISHED", "交易结束"),
+        ("paying", "待交付"),
     )
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="用户", on_delete=models.CASCADE)
@@ -78,4 +80,3 @@ class OrderGoods(models.Model):
 
     def __str__(self):
         return self.order.order_sn
-

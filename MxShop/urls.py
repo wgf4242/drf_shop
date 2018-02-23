@@ -13,6 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import xadmin
 from django.conf.urls import url, include
 from django.views.generic import TemplateView
 from django.views.static import serve
@@ -21,9 +22,8 @@ from rest_framework.documentation import include_docs_urls
 from rest_framework.routers import DefaultRouter
 from rest_framework_jwt.views import obtain_jwt_token
 
-import xadmin
 from MxShop.settings import MEDIA_ROOT
-from goods.views import GoodsListViewSet, CategoryViewSet
+from goods.views import GoodsListViewSet, CategoryViewSet, BannerViewSet, IndexCategoryViewSet
 from trade.views import ShoppingCartViewSet, OrderViewSet, AliPayView
 from user_operation.views import UserFavViewSet, LeavingMessageViewSet, AddressViewSet
 from users.views import SmsCodeGViewSet, UserViewSet
@@ -52,6 +52,12 @@ router.register(r'shopcarts', ShoppingCartViewSet, base_name='shopcarts')
 
 # 订单相关
 router.register(r'orders', OrderViewSet, base_name='orders')
+
+# 轮播图url
+router.register(r'banners', BannerViewSet, base_name='banners')
+
+# 首页商品系列数据
+router.register(r'indexGoods', IndexCategoryViewSet, base_name='indexGoods')
 
 # router.register(r'hotsearchs', HotSearchViewset, base_name='hotsearchs')
 

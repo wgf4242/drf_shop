@@ -2,6 +2,10 @@
 
 pillow 处理图片的包。
 
+# TODO
+
+保存密码这里有问题，createsuperuser后登录不了。
+
 # FAQ
 
 1. Model class MyModel doesn't declare an explicit app_label and isn't in an application in INSTALLED_APPS
@@ -1940,5 +1944,108 @@ https://docs.open.alipay.com/270/alipay.trade.page.pay
 
 qr_pay_mode=4：订单码 ，全部在前端完成体验比较好。
 
-保存密码这里有问题，createsuperuser后登录不了。
+# 第11章 首页、商品数量、缓存、限速功能开发
 
+## 11-1  轮播图接口实现和vue调试
+
+本地调试，PyCharm 中 Interpreter 改成本地的虚拟环境。settings.py 改成本地的数据库
+
+## 11-2  新品功能接口开发
+
+front_end:
+
+```ts
+getOpro(){
+    getGoods({
+        "is_new":true
+        })
+        .then((response) => {
+            //跳转到首页 response.body 页面
+            this.newopro = response.data.results
+        })
+        .catch(function (error) {
+            console.log(error)
+        })
+}
+```
+
+## 11-3  首页商品分类显示功能
+
+
+Goods - category 指向的是第三级，我们在 indexgoods 中取到的第一级，需要手动处理添加代码后 `makemigrations` , `migrate`.
+
+```python
+
+# views.py
+class BannerViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = BannerSerializer
+    class Meta:
+        model = Banner
+        fields = "__all__"
+class IndexCategoryViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    queryset = GoodsCategory.objects.filter(is_tab=True, name__in=["生鲜食品", "酒水饮料"])
+    serializer_class = IndexCategorySerializer
+
+# serializers.py
+class IndexCategorySerializer(serializers.ModelSerializer):
+    brands = BrandSerializer(many=True)
+    goods = serializers.SerializerMethodField()
+    sub_cat = CategorySerializer2(many=True)
+    ad_goods = serializers.SerializerMethodField()
+
+    def get_ad_goods(self, obj):
+        goods_json = {}
+        ad_goods = IndexAd.objects.filter(category_id=obj.id)
+        if ad_goods:
+            goods_ins = ad_goods[0].goods
+            goods_json = GoodsSerializer(goods_ins, many=False, context={'request': self.context['request']}).data
+            return goods_json
+
+    def get_goods(self, obj):
+        all_goods = Goods.objects.filter(Q(category_id=obj.id) | Q(category__parent_category_id=obj.id) | Q(
+            category__parent_category__parent_category_id=obj.id))
+        goods_serializer = GoodsSerializer(all_goods, many=True)
+        # rest_framework.mixins.ListModelMixin 用法相似
+        return goods_serializer.data
+
+    class Meta:
+        model = GoodsCategory
+        fields = "__all__"
+
+# models.py
+class IndexAd(models.Model):
+    category = models.ForeignKey(GoodsCategory, related_name='category', verbose_name="商品类目", on_delete=models.CASCADE)
+    goods = models.ForeignKey(Goods, related_name='goods')
+
+```
+
+`xadmin` 中品牌只能选一级，怎样选2级呢？
+
+```python
+class GoodsBrandAdmin(object):
+    list_display = ["category", "image", "name", "desc"]
+    def get_context(self):
+        context = super(GoodsBrandAdmin, self).get_context()
+        if 'form' in context:
+            context['form'].fields['category'].queryset = GoodsCategory.objects.filter(category_type=1)
+        return context
+```
+
+
+__在 Serializer 嵌套 Serializer 产生的问题：__
+
+这时 json 对象的 image 字段没有域名显示为 `"/media/goods/images/xxxxx.jpg"`
+
+    goods_json = GoodsSerializer(goods_ins, many=False).data
+
+需要添加一个参数 `context={'request': self.context['request']}`
+    
+    goods_json = GoodsSerializer(goods_ins, many=False, context={'request': self.context['request']}).data
+
+源码中 image 字段序列化时 会判断 request ，如果有会添加域名, 在上下文中使用，view中会自动添加request，仅在 Serializer 中嵌套使用时会有这个问题。
+
+11-5 商品点击数、收藏数修改
+11-6  商品库存和销量修改
+11-7 drf的缓存设置
+11-8  drf配置redis缓存
+11-9  drf的throttle设置api的访问速率

@@ -2,10 +2,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework import mixins
 from rest_framework import viewsets
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.pagination import PageNumberPagination
 
-from goods.serializers import GoodCategorySerializer, CategorySerializer
+from goods.models import Banner, HotSearchWords
+from goods.serializers import CategorySerializer, BannerSerializer, HotWordsSerializer, IndexCategorySerializer
 from .filters import GoodsFilter
 from .models import Goods, GoodsCategory
 from .serializers import GoodsSerializer
@@ -43,3 +43,25 @@ class CategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
     serializer_class = CategorySerializer
 
 
+class HotSearchsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """
+    获取热搜词列表
+    """
+    queryset = HotSearchWords.objects.all().order_by("-index")
+    serializer_class = HotWordsSerializer
+
+
+class BannerViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = BannerSerializer
+
+    class Meta:
+        model = Banner
+        fields = "__all__"
+
+
+class IndexCategoryViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """
+    首页商品分类数据
+    """
+    queryset = GoodsCategory.objects.filter(is_tab=True, name__in=["生鲜食品", "酒水饮料"])
+    serializer_class = IndexCategorySerializer

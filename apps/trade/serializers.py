@@ -1,9 +1,11 @@
 import time
 from rest_framework import serializers
 
+from MxShop.settings import private_key_path, alipay_pub_key_path, alipay_return_url
 from goods.models import Goods
 from goods.serializers import GoodsSerializer
 from trade.models import ShoppingCart, OrderInfo, OrderGoods
+from utils.alipay import AliPay
 
 
 class ShopCartDetailSerializer(serializers.ModelSerializer):
@@ -71,6 +73,24 @@ class OrderSerializer(serializers.ModelSerializer):
     order_sn = serializers.CharField(read_only=True)
     pay_time = serializers.DateTimeField(read_only=True)
     add_time = serializers.DateTimeField(read_only=True)
+    alipay_url = serializers.SerializerMethodField(read_only=True)
+
+    def get_alipay_url(self, obj):
+        alipay = AliPay(
+            appid="2016091200495873",
+            app_notify_url=alipay_return_url,
+            app_private_key_path=private_key_path,
+            alipay_public_key_path=alipay_pub_key_path,
+            debug=True,  # 默认False,
+            return_url=alipay_return_url
+        )
+        url = alipay.direct_pay(
+            subject=obj.order_sn,
+            out_trade_no=obj.order_sn,
+            total_amount=obj.order_mount,
+        )
+        re_url = "https://openapi.alipaydev.com/gateway.do?{data}".format(data=url)
+        return re_url
 
     def generate_order_sn(self):
         # 当前时间+userif+随机数

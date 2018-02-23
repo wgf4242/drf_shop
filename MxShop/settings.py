@@ -150,6 +150,10 @@ AUTHENTICATION_BACKENDS = ['users.views.CustomBackend']
 
 STATIC_URL = '/static/'
 
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
@@ -176,3 +180,4 @@ APIKEY = ""
 # 支付宝相关设置
 private_key_path = os.path.join(BASE_DIR, 'apps/trade/keys/private_2048.txt')
 alipay_pub_key_path = os.path.join(BASE_DIR, 'apps/trade/keys/ali_pub.txt')
+alipay_return_url = "http://47.92.87.172:8000/alipay/return/"

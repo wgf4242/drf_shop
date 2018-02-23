@@ -14,6 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.conf.urls import url, include
+from django.views.generic import TemplateView
 from django.views.static import serve
 from rest_framework.authtoken import views
 from rest_framework.documentation import include_docs_urls
@@ -61,6 +62,9 @@ urlpatterns = [
 
     # 商品列表页
     url(r'^', include(router.urls)),
+
+    url(r'^index/', TemplateView.as_view(template_name="index.html"), name="index"),
+
     url(r'docs/', include_docs_urls(title="生鲜Title")),
 
     url(r'^api-token-auth/', views.obtain_auth_token),

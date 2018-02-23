@@ -1875,3 +1875,70 @@ alipay_pub_key_path = os.path.join(BASE_DIR, 'apps/trade/keys/ali_pub.txt')
 
 ```
 
+## 10-15 支付宝接口和vue联调
+
+支付宝支付的url放到serializer中，可以重构create方法或将字段设到serializer中--SerializerMethodField，
+http://www.django-rest-framework.org/api-guide/fields/#serializermethodfield
+
+复制到order detail中，立即支付需要使用。
+
+创建订单成功后，跳转到alipay支付，希望支付后跳转回自己的页面。但是现在是已经不在我们的页面了。
+
+解决方法1：前端思路：请求支付宝时直接返回一张图片。直接返回给vue进行显示。自己再写个url不断后台查询是否完成支付。
+
+解决方法2：后端思路：用django代理页面请求，新建static目录，请build出来的文件放在static目录下。设置settings.py。设置staticfiles_dir
+
+```python
+
+class trade.views.AliPayView(APIView):
+    def get(self, request):
+        ...
+        sign = processed_dict.pop("sign", None)
+
+        alipay = AliPay(
+            appid="2016091200495873",
+            app_notify_url="http://47.92.87.172:8000/alipay/return/",
+            app_private_key_path=private_key_path,
+            alipay_public_key_path=alipay_pub_key_path,
+            debug=True,  # 默认False,
+            return_url="http://47.92.87.172:8000/alipay/return/"
+        )
+
+        verify_re = ...
+        for ...
+
+            response = redirect("index")
+            response.set_cookie("nextPath", "pay", max_age=2)
+            return response
+        else:
+            response = redirect("index")
+            return response
+
+class trade.serializers.OrderSerializer(serializers.ModelSerializer):
+    alipay_url = serializers.SerializerMethodField(read_only=True)
+
+    def get_alipay_url(self, obj):
+        alipay = AliPay(...)
+        url = alipay.direct_pay(
+            subject=obj.order_sn,
+            out_trade_no=obj.order_sn,
+            total_amount=obj.order_mount,
+        )
+        re_url = "https://openapi.alipaydev.com/gateway.do?{data}".format(data=url)
+        return re_url
+
+#settings.py
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+
+#urls.py
+url(r'^index/', TemplateView.as_view(template_name="index.html"), name="index"),
+```
+
+https://docs.open.alipay.com/270/alipay.trade.page.pay
+
+qr_pay_mode=4：订单码 ，全部在前端完成体验比较好。
+
+保存密码这里有问题，createsuperuser后登录不了。
+

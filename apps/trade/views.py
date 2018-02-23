@@ -1,6 +1,7 @@
 # Create your views here.
 from datetime import datetime
 
+from django.shortcuts import redirect
 from rest_framework import viewsets, mixins
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -8,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
-from MxShop.settings import private_key_path, alipay_pub_key_path
+from MxShop.settings import private_key_path, alipay_pub_key_path, alipay_return_url
 from trade.models import ShoppingCart, OrderInfo, OrderGoods
 from trade.serializers import ShopCartSerializer, ShopCartDetailSerializer, OrderSerializer, OrderDetailSerializer
 from utils.alipay import AliPay
@@ -94,11 +95,11 @@ class AliPayView(APIView):
 
         alipay = AliPay(
             appid="2016091200495873",
-            app_notify_url="http://47.92.87.172:8000/alipay/return/",
+            app_notify_url=alipay_return_url,
             app_private_key_path=private_key_path,
             alipay_public_key_path=alipay_pub_key_path,
             debug=True,  # 默认False,
-            return_url="http://47.92.87.172:8000/alipay/return/"
+            return_url=alipay_return_url,
         )
 
         verify_re = alipay.verify(processed_dict, sign)
@@ -115,7 +116,13 @@ class AliPayView(APIView):
                 existed_order.pay_time = datetime.now()
                 existed_order.save()
 
-            return Response("success")
+            response = redirect("index")
+            response.set_cookie("nextPath", "pay", max_age=2)
+            return response
+        else:
+            response = redirect("index")
+            return response
+
 
     def post(self, request):
         """

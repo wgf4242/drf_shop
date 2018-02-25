@@ -4,6 +4,8 @@ from rest_framework import mixins
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
+from rest_framework_extensions.cache.mixins import CacheResponseMixin
 
 from goods.models import Banner, HotSearchWords
 from goods.serializers import CategorySerializer, BannerSerializer, HotWordsSerializer, IndexCategorySerializer
@@ -19,10 +21,11 @@ class GoodsPagination(PageNumberPagination):
     max_page_size = 100
 
 
-class GoodsListViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class GoodsListViewSet(CacheResponseMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """
     商品列表页，分页，搜索，过滤，排序
     """
+    throttle_classes = (UserRateThrottle, AnonRateThrottle,)
     queryset = Goods.objects.all()
     serializer_class = GoodsSerializer
     pagination_class = GoodsPagination
@@ -30,7 +33,7 @@ class GoodsListViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewset
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter,)
     filter_class = GoodsFilter
     search_fields = ('name', 'goods_brief', 'goods_desc')
-    ordering_fields = ('sold_num', 'shop_price       ')
+    ordering_fields = ('sold_num', 'shop_price')
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()

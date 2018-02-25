@@ -2082,12 +2082,123 @@ class UserOperationConfig(AppConfig):
 
     def ready(self):
         import user_operation.signals
+```
 
+## 11-6  商品库存和销量修改
 
+新增商品到购物车
+修改购物车数量
+删除购物车记录
+
+```python
+
+# trade/views.py
+class ShoppingCartViewSet(viewsets.ModelViewSet):
+    ...
+    def perform_create(self, serializer):
+        shop_cart = serializer.save()
+        goods = shop_cart.goods
+        goods.goods_num -= shop_cart.nums
+        goods.save()
+
+    def perform_destroy(self, instance):
+        goods = instance.goods
+        goods.goods_num += instance.nums
+        goods.save()
+        instance.delete()
+
+    def perform_update(self, serializer):
+        existed_record = ShoppingCart.objects.get(id=serializer.instance.id)
+        existed_nums = existed_record.nums
+        saved_record = serializer.save()
+        nums = saved_record.nums - existed_nums
+        goods = saved_record.goods
+        goods.goods_num -= nums
+        goods.save()
+
+# 支付成功后修改售出记录
+class AliPayView(APIView):
+    def get(self, request):
+        ...
+        for existed_order in existed_orders:
+                order_goods = existed_orders.goods.all()
+                for order_good in order_goods:
+                    goods = order_good.goods
+                    goods.sold_num += order_good.goods_num
+                    goods.save()
+                    ...
 
 ```
 
-11-6  商品库存和销量修改
-11-7 drf的缓存设置
-11-8  drf配置redis缓存
-11-9  drf的throttle设置api的访问速率
+## 11-7 drf的缓存设置
+
+[django 缓存](https://docs.djangoproject.com/en/1.11/topics/cache/)
+
+drf 缓存 -- drf-extensions
+
+https://github.com/chibisov/drf-extensions
+
+[docs](http://chibisov.github.io/drf-extensions/docs/)
+
+[CacheResponseMixin](http://chibisov.github.io/drf-extensions/docs/#cacheresponsemixin)
+
+尽量个人数据不缓存，公共数据缓存
+
+It is common to cache standard viewset `retrieve` and `list` methods.
+
+CacheResponseMixin 添加到继承列表最前面
+
+    from rest_framework_extensions.cache.mixins import CacheResponseMixin
+    class GoodsListViewSet(CacheResponseMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+
+设置缓存时间
+
+    REST_FRAMEWORK_EXTENSIONS = {
+        'DEFAULT_CACHE_RESPONSE_TIMEOUT': 60 * 15
+    }
+
+## 11-8  drf配置redis缓存
+
+[django-redis](https://github.com/niwinz/django-redis), [Docs](http://django-redis-chs.readthedocs.io/zh_CN/latest/)
+
+`pip install django-redis`
+
+配置redis缓存 要把redis启动
+
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": "redis://127.0.0.1:6379/1",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            }
+        }
+    }
+
+使用 redis client, `keys *`
+
+不同参数传递时，都会生成不一样的key，保证不同过滤规则产生不同的key，不让数据取错。
+
+## 11-9  drf的throttle设置api的访问速率
+
+ip 限速问题： 防止爬虫无节制的访问。
+
+[Throttling](http://www.django-rest-framework.org/api-guide/throttling/)
+
+    # settings
+    REST_FRAMEWORK = {
+        'DEFAULT_THROTTLE_CLASSES': (
+            'rest_framework.throttling.AnonRateThrottle',
+            'rest_framework.throttling.UserRateThrottle'
+        ),
+        'DEFAULT_THROTTLE_RATES': {
+            'anon': '100/day',
+            'user': '1000/day'
+        }
+    }
+
+GoodsListViewSet
+
+    from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
+    class GoodsListViewSet():
+        throttle_classes = (UserRateThrottle, AnonRateThrottle,)

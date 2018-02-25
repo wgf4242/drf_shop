@@ -2044,7 +2044,49 @@ __在 Serializer 嵌套 Serializer 产生的问题：__
 
 源码中 image 字段序列化时 会判断 request ，如果有会添加域名, 在上下文中使用，view中会自动添加request，仅在 Serializer 中嵌套使用时会有这个问题。
 
-11-5 商品点击数、收藏数修改
+## 11-5 商品点击数、收藏数修改
+
+方法1 user_operation.views.UserFavViewSet perform_create
+方法2 信号量来解决
+
+```python
+
+# 商品点击数 +1
+class GoodsListViewSet(...):
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.click_num += 1
+        instance.save()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+        
+# user_operation/signals.py 商品收藏数加1
+@receiver(post_save, sender=UserFav)
+def create_userfav(sender, instance=None, created=False, **kwargs):
+    if created:
+        goods = instance.goods
+        goods.fav_num += 1
+        goods.save()
+
+
+@receiver(post_delete, sender=UserFav)
+def delete_userfav(sender, instance=None, created=False, **kwargs):
+    goods = instance.goods
+    goods.fav_num -= 1
+    goods.save()
+
+# user_operation.apps.UserOperationConfig
+class UserOperationConfig(AppConfig):
+    name = 'user_operation'
+    verbose_name = '用户操作管理'
+
+    def ready(self):
+        import user_operation.signals
+
+
+
+```
+
 11-6  商品库存和销量修改
 11-7 drf的缓存设置
 11-8  drf配置redis缓存

@@ -2342,3 +2342,211 @@ http://127.0.0.1/login/weibo/
     response.set_cookie("token", jwt_encode_handler(payload), max_age=24 * 3600)
     return response
 
+## 13-1 sentry的介绍和通过docker搭建sentry
+
+https://www.cnblogs.com/yu-hailong/p/7629120.html
+
+https://github.com/getsentry/sentry
+
+https://sentry.io 小项目可以使用在线的服务。大项目/敏感信息 自己搭建。
+
+错误日志 import!
+
+    logging 
+    登录到服务器查看文件
+    我们主动去查询， web 系统，
+    立即知道错误--邮件 -- 邮件特别多 bug>100
+    无法集中管理bug 有些公司在用jira 通过测试来提bug
+
+    sentry
+    分配bug > bobby
+    项目管理， 多个项目
+
+
+### CentOS 7 安装 sentry
+
+sudo yum remove docker docker-common docker-selinux docker-engine
+安装依赖包
+    
+    $ sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+    
+添加稳定的源
+
+    sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+__安装 docker ce__
+
+更新yum包
+
+    sudo yum makecache fast
+
+安装 docker ce
+
+    sudo yum install docker-ce
+
+启动docker
+
+    sudo yum start docker
+
+测试docker
+    
+    sudo docker run hello-world
+
+__安装方法二__
+
+下载安装包 https://download.docker.com/linux/centos/7/x86_64/stable/Packages/ 下载对应的安装包后
+
+    sudo yum install docker-ce-17.03.0.ce-1.el7.centos.x86_64.rpm
+
+安装 docker-compose
+
+    sudo yum install epel-release
+    sudo yum install -y python-pip
+    sudo pip install -y docker-compose
+
+安装 docker ce 
+    
+    sudo yum install docker-ce
+
+__2. sentry__
+
+安装 git
+
+    sudo yum install git
+    mkdir -p data/{sentry,postgres}
+
+下载 docker 镜像并构建容器
+
+https://github.com/getsentry/onpremise
+
+    git clone https://github.com/getsentry/onpremise.git
+    cd onepremise
+    docker-compose run --rm web config generate-secret-key
+    # 这时显示了 key xxxxxxxx
+    vim docker-compose.yml
+    # 修改 SENTRY_SECRET_KEY = xxxxxx
+    docker-compose run --rm web upgrade
+    docker-compose up -d
+    docker ps
+
+Access your instance at `localhost:9000!` 阿里云需要修改安全组
+
+或
+
+    git clone https://github.com/getsentry/onpremise.git
+    cd onepremise
+    sudo make build
+
+在xshell中无法回退时，按住Ctrl键再按退格就可以删除了。
+
+## 13-2 sentry的功能
+
+Project, Team, Members.
+
+新建一个project， name:mxshop. 创建项目。
+
+Get your DSN. 复制出来。在mxshop 中新建 test目录。新建 sentry_test.py , dsn = xxxxxxxx
+
+在 浏览器中点击 Python ，
+
+    pip install raven --upgrade
+
+示例 `sentry_test.py`
+
+```python
+from raven import Client
+
+dsn = "xxx"
+
+client = Client(dsn)
+
+try:
+    1 / 0
+except ZeroDivisionError:
+    client.captureException()
+```
+
+Project settings 里设置 用户可见性，及邮件的 Subject Prefix 便于筛选。
+
+Alert - Rules, 设置邮件发送频率。
+
+Sentry 功能强大，最常用的错误栈及发送邮件。
+
+支持同步到 github，jira 等等等。
+
+自己部署的支持 Web API ，支持 代码方式进行各种操作。
+
+## 13-3,4 sentry 集成到django rest framework中
+
+登录后 左下角 账户，设置好时区 Asia/Shanghai 24小时制
+
+大坑:
+
+左下角-管理。设置 sentry 邮件 ，发送设置。 host地址，用户名密码。发送一封测试邮件。测试之后还会出现一个timeout，
+
+    vim sentry.conf.py
+    复制出来
+    vim docker-compose.yml
+
+    SENTRY_POSTGRES_HOST: postgres #写在这行下面
+    SENTRY_EMAIL_HOST: 'smtp.sina.com'
+    SENTRY_EMAIL_USER: 'mymail32@sina.com'
+    SENTRY_SERVER_EMAIL: 'mymail32@sina.com'  #和user 保持一致
+    SENTRY_EMAIL_PASSWORD': 'mypwd'
+
+重启应用
+    
+    $ docker-compose up -d
+
+发送测试邮件时 在阿里云服务器出现timeout。
+
+阿里云 禁用了 25 端口仅支持465端口(ssl协议的更安全)， sina没有提供 25端口。
+
+sentry不支持 ssl 支持 tls。先用本地虚拟机测试发送邮件。
+
+docker ps , 找出他们的id
+
+    id1 onpremise_worker
+    id2 onpremise_web
+    id3 onpremise_cron
+
+    $docker stop id1,id2,id3
+
+    $docker start worker,cron,web
+    按这个顺序启动
+
+项目-项目设置 警报-规则，当事件第一次出现时发送邮件-编辑规则
+
+把虚拟机中的dsn配置到 tests/sentry_test.py。在邮箱里看一下-点击view on sentry.
+
+配置到 Django RestFramework中
+
+右下角-文档-django
+
+### Setup
+
+Using the Django integration is as simple as adding raven.contrib.django.raven_compat to your installed apps:
+
+```python
+INSTALLED_APPS = (
+    'raven.contrib.django.raven_compat',
+)
+```
+
+Additional settings for the client are configured using the RAVEN_CONFIG dictionary:
+
+```python
+import os
+import raven
+
+RAVEN_CONFIG = {
+    'dsn': 'https://<key>:<secret>@sentry.io/<project>',
+    # 'release': raven.fetch_git_sha(os.path.abspath(os.pardir)), #这行git相关不用了
+}
+```
+
+Once you’ve configured the client, you can test it using the standard Django management interface:
+
+    python manage.py raven test
+
+setry 支持集成各种语言，是一个前后端分离的技术，便于集成。

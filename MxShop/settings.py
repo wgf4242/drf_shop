@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'rest_framework.authtoken',
+    'social_django',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -82,6 +83,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -143,7 +146,13 @@ USE_L10N = True
 
 USE_TZ = False  # 默认是True, 时间是utc时间，由于我们要用本地时间，所用于手动改为false
 
-AUTHENTICATION_BACKENDS = ['users.views.CustomBackend']
+AUTHENTICATION_BACKENDS = [
+    'users.views.CustomBackend',
+    'social_core.backends.weibo.WeiboOAuth2',
+    'social_core.backends.qq.QQOAuth2',
+    'social_core.backends.weixin.WeixinOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+                           ]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
@@ -205,3 +214,14 @@ REST_FRAMEWORK_EXTENSIONS = {
 private_key_path = os.path.join(BASE_DIR, 'apps/trade/keys/private_2048.txt')
 alipay_pub_key_path = os.path.join(BASE_DIR, 'apps/trade/keys/ali_pub.txt')
 alipay_return_url = "http://47.92.87.172:8000/alipay/return/"
+
+SOCIAL_AUTH_WEIBO_KEY = '1567096538'
+SOCIAL_AUTH_WEIBO_SECRET = '7650580ddf0cd7d00224a3b1629bd333'
+
+SOCIAL_AUTH_QQ_KEY = 'foobar'
+SOCIAL_AUTH_QQ_SECRET = 'bazqux'
+
+SOCIAL_AUTH_WEIXIN_KEY = 'foobar'
+SOCIAL_AUTH_WEIXIN_SECRET = 'bazqux'
+
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/index/'

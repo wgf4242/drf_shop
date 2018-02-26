@@ -2202,3 +2202,143 @@ GoodsListViewSet
     from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
     class GoodsListViewSet():
         throttle_classes = (UserRateThrottle, AnonRateThrottle,)
+
+## 12-1 第三登录开发模式以及oauth2.0简介
+
+[微博登录](http://open.weibo.com/),[微信登录](https://open.weixin.qq.com/),[QQ登录](http://open.qq.com/) -- 跳转到第三方应用进行登录，再进行回调。 
+
+进入上面的微博开放平台， 应用信息-高级信息-设置回调地址。 保存AppKey, 
+
+[OAuth2.0授权认证](http://open.weibo.com/wiki/%E6%8E%88%E6%9D%83%E6%9C%BA%E5%88%B6%E8%AF%B4%E6%98%8E)
+
+## 12-2 oauth2.0获取微博的access_token
+
+```python
+def get_auth_url():
+    weibo_auth_url = "https://api.weibo.com/oauth2/authorize"
+    redirect_uri = ""
+    auth_url = weibo_auth_url + "?client_id={client_id}&redirect_uri={redirect_uri}".format(client_id=123,
+                                                                                            redirect_uri=redirect_uri)
+    print(auth_url)
+
+
+# http://open.weibo.com/wiki/Oauth2/access_token
+def get_access_token(code="11111"):
+    access_token_url = "https://api.weibo.com/oauth2/access_token"
+    import requests
+    re_dict = requests.post(access_token_url, data={
+        "client_id": 2222333,
+        "client_secret": "2c60bxxxxx",
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": "http://47.x.x.x/complete/weibo"
+    })
+
+    # '{access_token="xxx", uid="yyy"}
+
+
+def get_user_info(token, uid):
+    user_url = "https://api.weibo.com/2/users/show.json?access_token={token}&uid={uid}".format(token=token, uid=uid)
+    print(user_url)
+
+
+if __name__ == "__main__":
+    get_auth_url()
+    get_access_token(code="11111")
+    get_user_info(access_token="xxxxx", uid="yyyyy")
+```
+
+
+## 12-3 social_django集成第三方登录
+
+https://github.com/python-social-auth/social-app-django
+
+http://python-social-auth.readthedocs.io/en/latest/configuration/django.html
+
+    #settings.py
+    INSTALLED_APPS = [
+        ...
+        'social_django',
+    ]
+
+./manage.py migrate
+
+以前做过的部分： 提醒 mysql 默认用是的 MyISAM , database 记得加 innodb
+
+/site-packages/social_core/backends/weibo.py
+
+    AUTHENTICATION_BACKENDS = [
+        ...
+        'social_core.backends.weibo.WeiboOAuth2',
+        'social_core.backends.qq.QQOAuth2',
+        'social_core.backends.weixin.WeixinOAuth2',
+        'django.contrib.auth.backends.ModelBackend',
+                               ]
+
+Add URLs entries:
+
+    urlpatterns = patterns('',
+        ...
+        url('', include('social_django.urls', namespace='social'))
+        ...
+    )
+
+Template Context Processors
+
+    TEMPLATES = [
+        {
+            ...
+            'OPTIONS': {
+                ...
+                'context_processors': [
+                    ...
+                    'social_django.context_processors.backends',
+                    'social_django.context_processors.login_redirect',
+                    ...
+                ]
+            }
+        }
+    ]
+
+
+__本地调试__
+
+urls.py
+    
+    url(r'^login/$', obtain_jwt_token), #添加一个$符号，不然和下面的login冲突
+    url('', include('social_django.urls', namespace='social'))
+
+授权回调页设置为本机 `127.0.0.1/complete/weibo`
+
+为什么支付宝不能本机调试， weibo可以呢？ 微博这个是浏览器请求redirct 完成的，支付宝 notify_url 到达率很高, return_url(关闭页面后的异步回调)不高。
+
+trade/view.py notify_url 是支付宝向我们发起的一个post请求，不是给浏览器发送的redirect，隔一段时间发送一个post请求。所以必须是一个外部的地址。
+
+__配置key和secret__
+
+    SOCIAL_AUTH_WEIBO_KEY = 'foobar'
+    SOCIAL_AUTH_WEIBO_SECRET = 'bazqux'
+
+    SOCIAL_AUTH_QQ_KEY = 'foobar'
+    SOCIAL_AUTH_QQ_SECRET = 'bazqux'
+
+    SOCIAL_AUTH_WEIXIN_KEY = 'foobar'
+    SOCIAL_AUTH_WEIXIN_SECRET = 'bazqux'
+
+http://127.0.0.1/login/weibo/
+
+提示用户登录，成功后怎样跳转？
+
+    SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/index/'
+
+跳转后我们的网站并没有登录---它是为django做的不是为drf做的。需要手动修改源码实现。
+
+把social-core复制出来。 `extra_apps.social_core.actions.do_complete` 最后面
+
+    ...
+    response = backend.strategy.redirect(url)
+    payload = jwt_payload_handler(user)
+    response.set_cookie("name", user.name if user.name else user.username, max_age=24 * 3600)
+    response.set_cookie("token", jwt_encode_handler(payload), max_age=24 * 3600)
+    return response
+
